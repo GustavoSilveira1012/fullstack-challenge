@@ -11,3 +11,4 @@ export * from './get-wallet.use-case';
 export * from './process-bet-placed.use-case';
 export * from './process-cashout.use-case';
 export * from './process-bet-lost.use-case';
+export * from './application.module';

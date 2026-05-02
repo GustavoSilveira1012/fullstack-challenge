@@ -1,28 +1,6 @@
-/**
- * Application Layer DTOs
- * 
- * Data Transfer Objects for use cases and API communication.
- * These DTOs handle serialization/deserialization between domain entities and external representations.
- */
-
-import { IsString, IsNotEmpty, IsISO8601, Matches } from 'class-validator';
-
-/**
- * CreateWalletDto
- * 
- * Request DTO for wallet creation.
- * PlayerId is extracted from JWT token, so no body fields are needed.
- */
-export class CreateWalletDto {
-  // Empty - playerId extracted from JWT
+import { IsString, IsNotEmpty, IsISO8601, Matches } from 'class-validator';export class CreateWalletDto {
 }
 
-/**
- * WalletResponseDto
- * 
- * Response DTO for wallet operations.
- * Returns wallet information to clients.
- */
 export class WalletResponseDto {
   @IsString()
   @IsNotEmpty()
@@ -57,12 +35,6 @@ export class WalletResponseDto {
     this.updatedAt = updatedAt;
   }
 }
-
-/**
- * BetPlacedEventDto
- * 
- * DTO for Bet_Placed_Event from Game Service.
- */
 export class BetPlacedEventDto {
   @IsString()
   @IsNotEmpty()
@@ -98,12 +70,6 @@ export class BetPlacedEventDto {
     this.timestamp = timestamp;
   }
 }
-
-/**
- * CashoutEventDto
- * 
- * DTO for Cashout_Event from Game Service.
- */
 export class CashoutEventDto {
   @IsString()
   @IsNotEmpty()
@@ -146,12 +112,6 @@ export class CashoutEventDto {
     this.timestamp = timestamp;
   }
 }
-
-/**
- * BetLostEventDto
- * 
- * DTO for Bet_Lost_Event from Game Service.
- */
 export class BetLostEventDto {
   @IsString()
   @IsNotEmpty()
@@ -188,11 +148,6 @@ export class BetLostEventDto {
   }
 }
 
-/**
- * InsufficientBalanceErrorDto
- * 
- * DTO for Insufficient_Balance_Error event published by Wallet Service.
- */
 export class InsufficientBalanceErrorDto {
   @IsString()
   @IsNotEmpty()

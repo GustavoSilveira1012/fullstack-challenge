@@ -10,3 +10,4 @@ export * from './player-id';
 export * from './money';
 export * from './domain-event';
 export * from './wallet-repository';
+export * from './domain.module';

@@ -9,22 +9,33 @@
 
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { environmentConfig } from '../config/environment.config';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+  private pool: Pool;
 
   constructor() {
+    // Create PostgreSQL connection pool
+    const pool = new Pool({
+      connectionString: environmentConfig.databaseUrl,
+    });
+
+    // Create Prisma adapter
+    const adapter = new PrismaPg(pool);
+
     super({
+      adapter,
       log: environmentConfig.isDevelopment() 
         ? ['query', 'info', 'warn', 'error']
         : ['warn', 'error'],
       errorFormat: 'pretty',
     });
 
-    // Connection pool and query timeout are configured via DATABASE_URL query parameters:
-    // postgresql://user:pass@host:5432/db?connection_limit=10&pool_timeout=5&connect_timeout=5
+    this.pool = pool;
   }
 
   /**
@@ -48,6 +59,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       this.logger.log('Disconnecting from PostgreSQL database...');
       await this.$disconnect();
+      await this.pool.end();
       this.logger.log('Successfully disconnected from PostgreSQL database');
     } catch (error) {
       this.logger.error('Error disconnecting from PostgreSQL database', error);

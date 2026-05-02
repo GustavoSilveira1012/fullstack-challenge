@@ -17,7 +17,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
   - Create environment variable configuration module
   - _Requirements: 11.4, 15.1, 15.2_
 
-- [ ] 2. Implement domain layer - Value Objects
+- [x] 2. Implement domain layer - Value Objects
   - [x] 2.1 Implement Money value object
     - Create Money class with private bigint centavos field
     - Implement static factory methods: fromCentavos(), zero()
@@ -54,7 +54,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test equals() with same and different values
     - Test error messages for invalid inputs
 
-- [ ] 3. Implement domain layer - Entity Value Objects
+- [x] 3. Implement domain layer - Entity Value Objects
   - [x] 3.1 Implement WalletId value object
     - Create WalletId class with private string value (UUID v4)
     - Implement static factory methods: create(), fromString()
@@ -75,7 +75,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test equals() method
     - Test immutability
 
-- [ ] 4. Implement domain layer - Wallet Entity
+- [x] 4. Implement domain layer - Wallet Entity
   - [x] 4.1 Implement Wallet entity class
     - Create Wallet class with private fields: id, playerId, balance, createdAt, updatedAt
     - Implement constructor with all fields
@@ -111,7 +111,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test getters return correct values
     - Test immutability of id and playerId
 
-- [ ] 5. Implement domain layer - Domain Events
+- [x] 5. Implement domain layer - Domain Events
   - [x] 5.1 Create domain event interfaces and classes
     - Create DomainEvent interface with eventId and occurredAt
     - Implement WalletCreated event
@@ -125,7 +125,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test event immutability
     - Test event serialization to JSON
 
-- [ ] 6. Implement domain layer - Repository Interface
+- [x] 6. Implement domain layer - Repository Interface
   - [x] 6.1 Define IWalletRepository interface
     - Define save(wallet: Wallet): Promise<void>
     - Define findById(id: WalletId): Promise<Wallet | null>
@@ -137,7 +137,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
 - [x] 7. Checkpoint - Domain layer complete
   - Ensure all domain tests pass, ask the user if questions arise.
 
-- [ ] 8. Implement infrastructure layer - Prisma setup
+- [x] 8. Implement infrastructure layer - Prisma setup
   - [x] 8.1 Create Prisma schema and migrations
     - Define Wallet model in schema.prisma with exact field types
     - Add CHECK constraint for balance >= 0
@@ -151,7 +151,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Configure connection pool and query timeout
     - _Requirements: 11.1, 11.3_
 
-- [ ] 9. Implement infrastructure layer - Wallet Repository
+- [x] 9. Implement infrastructure layer - Wallet Repository
   - [x] 9.1 Implement PrismaWalletRepository
     - Implement save() with upsert logic and transaction support
     - Implement findById() with domain model mapping
@@ -171,7 +171,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test transaction rollback on error
     - Test unique constraint on playerId
 
-- [ ] 10. Implement infrastructure layer - RabbitMQ Publisher
+- [x] 10. Implement infrastructure layer - RabbitMQ Publisher
   - [x] 10.1 Implement IEventPublisher interface
     - Define publish(event: DomainEvent): Promise<void>
     - _Requirements: 8.1_
@@ -268,7 +268,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
 - [x] 13. Checkpoint - Application layer complete
   - Ensure all application tests pass, ask the user if questions arise.
 
-- [-] 14. Implement infrastructure layer - RabbitMQ Consumer
+- [x] 14. Implement infrastructure layer - RabbitMQ Consumer
   - [x] 14.1 Implement RabbitMQConsumer
     - Inject ProcessBetPlacedUseCase, ProcessCashoutUseCase, ProcessBetLostUseCase
     - Implement start() to connect and subscribe to queues
@@ -280,15 +280,42 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Add error handling and logging
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 13.1_
   
-  - [-] 14.2 Write integration tests for RabbitMQConsumer
-    - Test subscription to all three queues
-    - Test message parsing and use case invocation
-    - Test ACK on successful processing
-    - Test NACK on transient errors
-    - Test error logging
+  - [x] 14.2 Write integration tests for RabbitMQConsumer
+    - [x] 14.2.1 Set up test infrastructure and basic connection tests
+      - Create test setup with in-memory RabbitMQ or test container
+      - Test RabbitMQConsumer connection establishment
+      - Test graceful shutdown functionality
+      - _Requirements: 8.1, 8.2_
+    
+    - [x] 14.2.2 Test queue subscription functionality
+      - Test subscription to bet-placed queue
+      - Test subscription to cashout queue  
+      - Test subscription to bet-lost queue
+      - Verify all three queues are properly bound
+      - _Requirements: 8.3, 8.4_
+    
+    - [x] 14.2.3 Test message parsing and use case invocation
+      - Test handleBetPlaced() message parsing and ProcessBetPlacedUseCase invocation
+      - Test handleCashout() message parsing and ProcessCashoutUseCase invocation
+      - Test handleBetLost() message parsing and ProcessBetLostUseCase invocation
+      - Test invalid message format handling
+      - _Requirements: 8.5, 8.6_
+    
+    - [x] 14.2.4 Test message acknowledgment behavior
+      - Test ACK on successful message processing
+      - Test NACK on transient errors (database connection issues)
+      - Test message requeue behavior on NACK
+      - _Requirements: 8.7_
+    
+    - [x] 14.2.5 Test error handling and logging
+      - Test error logging for invalid messages
+      - Test error logging for use case failures
+      - Test error logging for connection issues
+      - Verify proper error context in logs
+      - _Requirements: 13.1_
 
-- [ ] 15. Implement presentation layer - Authentication Guard
-  - [ ] 15.1 Implement JwtAuthGuard
+- [x] 15. Implement presentation layer - Authentication Guard
+  - [x] 15.1 Implement JwtAuthGuard
     - Implement CanActivate interface
     - Extract JWT token from Authorization header
     - Validate token signature, expiration, and issuer
@@ -297,7 +324,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Return 401 error for missing or invalid tokens
     - _Requirements: 9.1, 9.2, 9.3, 9.5_
   
-  - [ ] 15.2 Write unit tests for JwtAuthGuard
+  - [x] 15.2 Write unit tests for JwtAuthGuard
     - Test valid token extraction and validation
     - Test missing token rejection
     - Test invalid token rejection
@@ -305,7 +332,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test playerId extraction
 
 - [ ] 16. Implement presentation layer - REST Controllers
-  - [ ] 16.1 Implement WalletsController
+  - [x] 16.1 Implement WalletsController
     - Apply @UseGuards(JwtAuthGuard) decorator
     - Implement POST /wallets endpoint
     - Extract playerId from request (set by guard)
@@ -319,7 +346,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Handle WalletNotFoundError → 404 Not Found
     - _Requirements: 1.1, 1.3, 1.5, 2.1, 2.2, 2.3, 9.4, 13.2_
   
-  - [ ] 16.2 Implement HealthController
+  - [x] 16.2 Implement HealthController
     - Inject PrismaService and RabbitMQ connection
     - Implement GET /health endpoint
     - Check database connectivity with simple query
@@ -337,13 +364,13 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test GET /wallets/me with non-existent wallet (404)
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
   
-  - [ ] 16.4 Write E2E tests for HealthController
+  - [~] 16.4 Write E2E tests for HealthController
     - Test GET /health with healthy dependencies (200)
     - Test GET /health with database down (503)
     - Test GET /health with RabbitMQ down (503)
 
-- [ ] 17. Implement presentation layer - Error Handling
-  - [ ] 17.1 Create global exception filter
+- [x] 17. Implement presentation layer - Error Handling
+  - [x] 17.1 Create global exception filter
     - Map domain errors to HTTP status codes
     - Map infrastructure errors to 5xx responses
     - Format error responses with consistent structure
@@ -351,14 +378,14 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Log all errors with context
     - _Requirements: 13.1, 13.2, 13.4_
   
-  - [ ] 17.2 Write unit tests for exception filter
+  - [x] 17.2 Write unit tests for exception filter
     - Test domain error mapping
     - Test infrastructure error mapping
     - Test error response format
     - Test error logging
 
-- [ ] 18. Implement cross-cutting concerns - Logging
-  - [ ] 18.1 Configure structured logging
+- [x] 18. Implement cross-cutting concerns - Logging
+  - [x] 18.1 Configure structured logging
     - Set up JSON logging format
     - Configure log levels from environment
     - Add request ID middleware
@@ -366,11 +393,11 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Implement sensitive data redaction
     - _Requirements: 13.1, 13.3, 13.4, 13.5_
 
-- [ ] 19. Wire all components together in NestJS modules
-  - [ ] 19.1 Create DomainModule
+- [x] 19. Wire all components together in NestJS modules
+  - [x] 19.1 Create DomainModule
     - No providers needed (pure domain logic)
   
-  - [ ] 19.2 Create InfrastructureModule
+  - [x] 19.2 Create InfrastructureModule
     - Register PrismaService as provider
     - Register PrismaWalletRepository as IWalletRepository provider
     - Register RabbitMQPublisher as IEventPublisher provider
@@ -378,13 +405,13 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Configure module exports
     - _Requirements: 14.4_
   
-  - [ ] 19.3 Create ApplicationModule
+  - [x] 19.3 Create ApplicationModule
     - Import InfrastructureModule
     - Register all use cases as providers
     - Configure module exports
     - _Requirements: 14.3_
   
-  - [ ] 19.4 Update AppModule
+  - [x] 19.4 Update AppModule
     - Import ApplicationModule
     - Import InfrastructureModule
     - Register WalletsController
@@ -394,8 +421,8 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Configure lifecycle hooks for RabbitMQ consumer startup
     - _Requirements: 14.1_
 
-- [ ] 20. Implement concurrent operations property test (Property 6)
-  - [ ] 20.1 Write property test for concurrent operations correctness
+- [x] 20. Implement concurrent operations property test (Property 6)
+  - [x] 20.1 Write property test for concurrent operations correctness
     - **Property 6: Concurrent Operations Correctness**
     - **Validates: Requirements 7.1**
     - Generate random initial balance and sequences of credit/debit operations
@@ -404,14 +431,14 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Verify no race conditions or lost updates
 
 - [ ] 21. Final checkpoint - Integration and testing
-  - [ ] 21.1 Run all tests and verify coverage
+  - [~] 21.1 Run all tests and verify coverage
     - Run unit tests: `bun test tests/unit`
     - Run property tests: `bun test tests/unit/**/*.property.test.ts`
     - Run E2E tests: `bun test:e2e`
     - Verify coverage meets targets (domain 95%, application 90%, overall 85%)
     - _Requirements: 16.6_
   
-  - [ ] 21.2 Test end-to-end flow manually
+  - [~] 21.2 Test end-to-end flow manually
     - Start PostgreSQL and RabbitMQ using docker-compose
     - Run Prisma migrations
     - Start the service
@@ -421,7 +448,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Verify balance updates correctly
     - Check health endpoint
   
-  - [ ] 21.3 Review and cleanup
+  - [~] 21.3 Review and cleanup
     - Remove any unused imports or dead code
     - Ensure all files follow consistent formatting
     - Verify all environment variables documented in .env.example
