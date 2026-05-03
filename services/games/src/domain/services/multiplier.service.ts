@@ -62,12 +62,14 @@ export class MultiplierService implements IMultiplierService {
    * Calculate the time (in milliseconds) until the round crashes
    * Inverse of the multiplier formula:
    * elapsedMs = ln(crashPoint) / 0.00006
+  /**
+   * Calculate time until crash based on crash point
    *
-   * @param startTime - When the round started
+   * @param _startTime - When the round started (not used in calculation)
    * @param crashPoint - The crash point for this round
    * @returns Time in milliseconds until crash
    */
-  getTimeUntilCrash(startTime: Date, crashPoint: CrashPoint): number {
+  getTimeUntilCrash(_startTime: Date, crashPoint: CrashPoint): number {
     const crashPointValue = crashPoint.toNumber();
 
     // Handle edge case where crash point is 1.00x

@@ -4,7 +4,7 @@
  * Wraps a Multiplier and ensures it's >= 1.00x
  */
 
-import { Multiplier, InvalidMultiplierError } from './multiplier';
+import { Multiplier } from './multiplier';
 
 export class InvalidCrashPointError extends Error {
   constructor(message: string) {

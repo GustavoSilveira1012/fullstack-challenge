@@ -62,4 +62,24 @@ export class EnvironmentConfig {
   isProduction(): boolean {
     return this.nodeEnv === 'production';
   }
+
+  getRabbitMQUrl(): string {
+    return this.rabbitmqUrl;
+  }
+
+  getDatabaseUrl(): string {
+    return this.databaseUrl;
+  }
+
+  getPort(): number {
+    return this.port;
+  }
+
+  getJwtSecret(): string {
+    return this.jwtSecret;
+  }
+
+  getJwtIssuer(): string {
+    return this.jwtIssuer;
+  }
 }
