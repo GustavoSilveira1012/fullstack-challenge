@@ -58,25 +58,25 @@ This implementation plan breaks down the Crash Game Frontend into discrete, incr
   - [x] 5.7 Write unit tests for all hooks
   - _Requirements: 2.1.1, 2.1.2, 2.1.3, 2.1.4_
 
-- [-] 6. UI Components - Basic
-  - [ ] 6.1 Create Button component (variants, sizes, states)
-  - [ ] 6.2 Create Input component (text, number, validation)
-  - [ ] 6.3 Create Card component
-  - [ ] 6.4 Create Badge component
-  - [ ] 6.5 Create Loading component (spinner)
-  - [ ] 6.6 Write unit tests for UI components
+- [x] 6. UI Components - Basic
+  - [x] 6.1 Create Button component (variants, sizes, states)
+  - [x] 6.2 Create Input component (text, number, validation)
+  - [x] 6.3 Create Card component
+  - [x] 6.4 Create Badge component
+  - [x] 6.5 Create Loading component (spinner)
+  - [x] 6.6 Write unit tests for UI components
   - _Requirements: 2.8.1, 2.8.2, 2.8.3, 2.8.4_
 
-- [ ] 7. UI Components - Advanced
-  - [ ] 7.1 Create Modal component (accessible, animations)
-  - [ ] 7.2 Create Notification component (toast notifications)
-  - [ ] 7.3 Create Header component (logo, balance, user menu)
-  - [ ] 7.4 Create Sidebar component (navigation, game history)
-  - [ ] 7.5 Create Footer component
-  - [ ] 7.6 Write unit tests for advanced components
+- [x] 7. UI Components - Advanced
+  - [x] 7.1 Create Modal component (accessible, animations)
+  - [x] 7.2 Create Notification component (toast notifications)
+  - [x] 7.3 Create Header component (logo, balance, user menu)
+  - [x] 7.4 Create Sidebar component (navigation, game history)
+  - [x] 7.5 Create Footer component
+  - [x] 7.6 Write unit tests for advanced components
   - _Requirements: 2.1.2, 2.1.3, 2.1.4, 2.8.3_
 
-- [ ] 8. Game Components - Display
+- [-] 8. Game Components - Display
   - [ ] 8.1 Create MultiplierDisplay component (real-time updates, color coding)
   - [ ] 8.2 Create GameHistory component (recent rounds list)
   - [ ] 8.3 Create PlayerStats component (statistics display)
