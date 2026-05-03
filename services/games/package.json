@@ -12,11 +12,22 @@
     "@nestjs/common": "^11.1.17",
     "@nestjs/core": "^11.1.17",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/platform-socket.io": "^11.1.17",
+    "@nestjs/websockets": "^11.1.17",
+    "@prisma/client": "^7.8.0",
+    "amqplib": "^1.0.3",
+    "fast-check": "^4.7.0",
+    "jsonwebtoken": "^9.0.3",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.8",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.14.14",
     "bun-types": "latest",
+    "prisma": "^7.8.0",
     "typescript": "^5.8.3"
   }
 }

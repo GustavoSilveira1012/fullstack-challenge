@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Round {
+  id                String   @id @default(uuid())
+  serverSeed        String   @db.Char(64) // 32 bytes hex
+  serverSeedHash    String   @db.Char(64) // SHA-256 hex
+  crashPoint        Decimal  @db.Numeric(10, 2) // Multiplier with 2 decimal places, >= 1.00
+  state             String   @default("BETTING") // BETTING, RUNNING, CRASHED, FINISHED
+  createdAt         DateTime @default(now())
+  startedAt         DateTime?
+  crashedAt         DateTime?
+  finishedAt        DateTime?
+  version           Int      @default(0) // For optimistic locking
+  
+  bets              Bet[]
+
+  @@index([state])
+  @@index([createdAt])
+  @@check("crashPoint >= 1.00")
+}
+
+model Bet {
+  id                String   @id @default(uuid())
+  roundId           String
+  playerId          String
+  amount            BigInt   // Amount in centavos (100 = 1.00)
+  state             String   @default("PENDING") // PENDING, ACTIVE, CASHED_OUT, LOST, REJECTED
+  cashOutMultiplier Decimal? @db.Numeric(10, 2) // Multiplier at cash out
+  payout            BigInt?  // Payout in centavos
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  round             Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, playerId])
+  @@index([roundId])
+  @@index([playerId])
+  @@index([state])
+  @@check("amount >= 100 AND amount <= 100000")
+}

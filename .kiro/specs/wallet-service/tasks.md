@@ -438,7 +438,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Verify coverage meets targets (domain 95%, application 90%, overall 85%)
     - _Requirements: 16.6_
   
-  - [X] 21.2 Test end-to-end flow manually
+  - [x] 21.2 Test end-to-end flow manually
     - Start PostgreSQL and RabbitMQ using docker-compose
     - Run Prisma migrations
     - Start the service
@@ -448,7 +448,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Verify balance updates correctly
     - Check health endpoint
   
-  - [~] 21.3 Review and cleanup
+  - [x] 21.3 Review and cleanup
     - Remove any unused imports or dead code
     - Ensure all files follow consistent formatting
     - Verify all environment variables documented in .env.example
