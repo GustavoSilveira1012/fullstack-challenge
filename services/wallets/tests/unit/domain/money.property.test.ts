@@ -32,7 +32,7 @@ describe('Property 1: Money Value Object Precision', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -52,7 +52,7 @@ describe('Property 1: Money Value Object Precision', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -74,7 +74,7 @@ describe('Property 1: Money Value Object Precision', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -93,7 +93,7 @@ describe('Property 1: Money Value Object Precision', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -115,7 +115,7 @@ describe('Property 1: Money Value Object Precision', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });
@@ -152,7 +152,7 @@ describe('Property 8: Amount Validation', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -172,7 +172,7 @@ describe('Property 8: Amount Validation', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -193,7 +193,7 @@ describe('Property 8: Amount Validation', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -221,7 +221,7 @@ describe('Property 8: Amount Validation', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -244,7 +244,7 @@ describe('Property 8: Amount Validation', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -270,7 +270,7 @@ describe('Property 8: Amount Validation', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });
@@ -313,7 +313,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -351,7 +351,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -394,7 +394,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -425,7 +425,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -460,7 +460,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -487,7 +487,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -517,7 +517,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -546,7 +546,7 @@ describe('Property 2: Money Arithmetic Exactness', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });

@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, IsISO8601, Matches } from 'class-validator';export class CreateWalletDto {
+import { IsString, IsNotEmpty, IsISO8601, Matches, ValidateIf } from 'class-validator';
+
+/**
+ * CreateWalletDto
+ * 
+ * Empty DTO - playerId is extracted from JWT token by the guard.
+ * No validation needed as there are no fields.
+ */
+export class CreateWalletDto {
+  // Empty DTO - playerId comes from JWT
 }
 
 export class WalletResponseDto {

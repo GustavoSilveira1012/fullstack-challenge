@@ -25,7 +25,7 @@ import { WalletsController } from './presentation/controllers/wallets.controller
 import { HealthController } from './presentation/controllers/health.controller';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { GlobalExceptionFilter } from './presentation/filters/global-exception.filter';
-import { StructuredLogger, RequestIdMiddleware } from './infrastructure/logging';
+import { RequestIdMiddleware } from './infrastructure/logging';
 
 @Module({
   imports: [
@@ -49,9 +49,6 @@ import { StructuredLogger, RequestIdMiddleware } from './infrastructure/logging'
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
-    
-    // Register structured logger
-    StructuredLogger,
   ],
 })
 export class AppModule implements NestModule {

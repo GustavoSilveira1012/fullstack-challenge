@@ -286,27 +286,27 @@ This implementation plan breaks down the Wallet Service into discrete, increment
       - Test RabbitMQConsumer connection establishment
       - Test graceful shutdown functionality
       - _Requirements: 8.1, 8.2_
-    
+
     - [x] 14.2.2 Test queue subscription functionality
       - Test subscription to bet-placed queue
       - Test subscription to cashout queue  
       - Test subscription to bet-lost queue
       - Verify all three queues are properly bound
       - _Requirements: 8.3, 8.4_
-    
+
     - [x] 14.2.3 Test message parsing and use case invocation
       - Test handleBetPlaced() message parsing and ProcessBetPlacedUseCase invocation
       - Test handleCashout() message parsing and ProcessCashoutUseCase invocation
       - Test handleBetLost() message parsing and ProcessBetLostUseCase invocation
       - Test invalid message format handling
       - _Requirements: 8.5, 8.6_
-    
+
     - [x] 14.2.4 Test message acknowledgment behavior
       - Test ACK on successful message processing
       - Test NACK on transient errors (database connection issues)
       - Test message requeue behavior on NACK
       - _Requirements: 8.7_
-    
+
     - [x] 14.2.5 Test error handling and logging
       - Test error logging for invalid messages
       - Test error logging for use case failures
@@ -355,7 +355,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Return 503 Service Unavailable if any dependency unhealthy
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
   
-  - [ ] 16.3 Write E2E tests for WalletsController
+  - [x] 16.3 Write E2E tests for WalletsController
     - Test POST /wallets with valid JWT (success)
     - Test POST /wallets without JWT (401)
     - Test POST /wallets with existing wallet (409)
@@ -364,7 +364,7 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Test GET /wallets/me with non-existent wallet (404)
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
   
-  - [~] 16.4 Write E2E tests for HealthController
+  - [x] 16.4 Write E2E tests for HealthController
     - Test GET /health with healthy dependencies (200)
     - Test GET /health with database down (503)
     - Test GET /health with RabbitMQ down (503)
@@ -430,15 +430,15 @@ This implementation plan breaks down the Wallet Service into discrete, increment
     - Verify final balance equals initial + sum(credits) - sum(debits)
     - Verify no race conditions or lost updates
 
-- [ ] 21. Final checkpoint - Integration and testing
-  - [~] 21.1 Run all tests and verify coverage
+- [x] 21. Final checkpoint - Integration and testing
+  - [x] 21.1 Run all tests and verify coverage
     - Run unit tests: `bun test tests/unit`
     - Run property tests: `bun test tests/unit/**/*.property.test.ts`
     - Run E2E tests: `bun test:e2e`
     - Verify coverage meets targets (domain 95%, application 90%, overall 85%)
     - _Requirements: 16.6_
   
-  - [~] 21.2 Test end-to-end flow manually
+  - [X] 21.2 Test end-to-end flow manually
     - Start PostgreSQL and RabbitMQ using docker-compose
     - Run Prisma migrations
     - Start the service

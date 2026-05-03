@@ -19,6 +19,7 @@ import { GetWalletUseCase } from './get-wallet.use-case';
 import { ProcessBetPlacedUseCase } from './process-bet-placed.use-case';
 import { ProcessCashoutUseCase } from './process-cashout.use-case';
 import { ProcessBetLostUseCase } from './process-bet-lost.use-case';
+import { RabbitMQConsumer } from '../infrastructure/messaging/rabbitmq-consumer';
 
 @Module({
   imports: [
@@ -32,6 +33,9 @@ import { ProcessBetLostUseCase } from './process-bet-lost.use-case';
     ProcessBetPlacedUseCase,
     ProcessCashoutUseCase,
     ProcessBetLostUseCase,
+    
+    // Register RabbitMQ consumer (depends on use cases, so must be here)
+    RabbitMQConsumer,
   ],
   exports: [
     // Export use cases for use in presentation layer (controllers)
@@ -40,6 +44,9 @@ import { ProcessBetLostUseCase } from './process-bet-lost.use-case';
     ProcessBetPlacedUseCase,
     ProcessCashoutUseCase,
     ProcessBetLostUseCase,
+    
+    // Export consumer for health checks and lifecycle management
+    RabbitMQConsumer,
   ],
 })
 export class ApplicationModule {}

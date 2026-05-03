@@ -3,7 +3,7 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { PrismaService } from "./infrastructure/database/prisma.service";
 import { GlobalExceptionFilter } from "./presentation/filters";
-import { LoggingInterceptor } from "./infrastructure/logging";
+import { LoggingInterceptor, StructuredLogger } from "./infrastructure/logging";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -20,7 +20,10 @@ async function bootstrap(): Promise<void> {
   
   const port = process.env.PORT || 3001;
   await app.listen(port, "0.0.0.0");
-  console.log(`Wallets service running on port ${port}`);
+  
+  // Use structured logger instead of console.log
+  const logger = new StructuredLogger('Bootstrap');
+  logger.info('Wallets service started successfully', { port });
 }
 
 bootstrap();

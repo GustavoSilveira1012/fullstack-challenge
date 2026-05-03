@@ -156,7 +156,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toBeDefined();
+      expect(body.error.message).toBeDefined();
     });
 
     it('should return 401 when JWT is invalid', async () => {
@@ -169,7 +169,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toBeDefined();
+      expect(body.error.message).toBeDefined();
     });
 
     it('should return 401 when JWT has invalid signature', async () => {
@@ -190,7 +190,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toContain('Invalid token signature');
+      expect(body.error.message).toContain('Invalid token signature');
     });
 
     it('should return 401 when JWT has expired', async () => {
@@ -211,7 +211,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toContain('expired');
+      expect(body.error.message).toContain('expired');
     });
 
     it('should return 401 when JWT has wrong issuer', async () => {
@@ -232,7 +232,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toBeDefined();
+      expect(body.error.message).toBeDefined();
     });
 
     it('should return 409 when wallet already exists for player', async () => {
@@ -355,7 +355,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toBeDefined();
+      expect(body.error.message).toBeDefined();
     });
 
     it('should return 401 when JWT is invalid', async () => {
@@ -368,7 +368,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toBeDefined();
+      expect(body.error.message).toBeDefined();
     });
 
     it('should return 401 when JWT has invalid signature', async () => {
@@ -389,7 +389,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toContain('Invalid token signature');
+      expect(body.error.message).toContain('Invalid token signature');
     });
 
     it('should return 401 when JWT has expired', async () => {
@@ -410,7 +410,7 @@ describe('WalletsController E2E', () => {
 
       // Assert
       expect(response.status).toBe(401);
-      expect(body.message).toContain('expired');
+      expect(body.error.message).toContain('expired');
     });
 
     it('should return 404 when wallet does not exist for player', async () => {

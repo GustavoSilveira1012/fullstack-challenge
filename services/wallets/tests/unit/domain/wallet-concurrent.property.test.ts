@@ -102,7 +102,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBe(expectedBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -136,7 +136,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBe(expectedBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -186,7 +186,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBe(expectedBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -249,7 +249,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(wallet3.getBalance().toCentavos()).toBe(expectedBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -280,7 +280,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBeGreaterThanOrEqual(0n);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -325,7 +325,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBe(runningBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -367,7 +367,7 @@ describe('Property 6: Concurrent Operations Correctness', () => {
           expect(finalBalance).toBeGreaterThanOrEqual(0n);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });

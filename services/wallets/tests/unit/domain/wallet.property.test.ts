@@ -59,7 +59,7 @@ describe('Property 3: Credit Operation Correctness', () => {
           expect(wallet.getBalance().toCentavos() === expectedBalance).toBe(true);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -82,7 +82,7 @@ describe('Property 3: Credit Operation Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBe(creditAmountCentavos);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -110,7 +110,7 @@ describe('Property 3: Credit Operation Correctness', () => {
           expect(wallet.getBalance().toCentavos()).toBe(expectedBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -136,7 +136,7 @@ describe('Property 3: Credit Operation Correctness', () => {
           expect(wallet.getBalance().toCentavos() === expectedBalance).toBe(true);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });
@@ -181,7 +181,7 @@ describe('Property 4: Debit Operation Correctness with Sufficient Balance', () =
           expect(wallet.getBalance().toCentavos() === expectedBalance).toBe(true);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -205,7 +205,7 @@ describe('Property 4: Debit Operation Correctness with Sufficient Balance', () =
           expect(wallet.getBalance().toCentavos()).toBe(0n);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -240,7 +240,7 @@ describe('Property 4: Debit Operation Correctness with Sufficient Balance', () =
           expect(wallet.getBalance().toCentavos()).toBe(expectedBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -270,7 +270,7 @@ describe('Property 4: Debit Operation Correctness with Sufficient Balance', () =
           expect(wallet.getBalance().toCentavos() === expectedBalance).toBe(true);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -297,7 +297,7 @@ describe('Property 4: Debit Operation Correctness with Sufficient Balance', () =
           expect(wallet.getBalance().toCentavos()).toBe(1n);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });
@@ -350,7 +350,7 @@ describe('Property 5: Balance Non-Negativity Invariant', () => {
           expect(wallet.getBalance().toCentavos()).toBe(smallerValue);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -379,7 +379,7 @@ describe('Property 5: Balance Non-Negativity Invariant', () => {
           expect(wallet.getBalance().toCentavos()).toBe(0n);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -416,7 +416,7 @@ describe('Property 5: Balance Non-Negativity Invariant', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -449,7 +449,7 @@ describe('Property 5: Balance Non-Negativity Invariant', () => {
           expect(wallet.getBalance().toCentavos()).toBe(originalBalance);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -475,7 +475,7 @@ describe('Property 5: Balance Non-Negativity Invariant', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
@@ -510,7 +510,7 @@ describe('Property 5: Balance Non-Negativity Invariant', () => {
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });

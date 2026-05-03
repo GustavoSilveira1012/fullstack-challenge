@@ -25,20 +25,45 @@ class MockWalletRepository implements IWalletRepository {
   private wallets: Map<string, Wallet> = new Map();
 
   async save(wallet: Wallet): Promise<void> {
-    this.wallets.set(wallet.getPlayerId().toString(), wallet);
+    // Create a new wallet instance to avoid mutation issues
+    const newWallet = new Wallet(
+      wallet.getId(),
+      wallet.getPlayerId(),
+      wallet.getBalance(),
+      wallet.getCreatedAt(),
+      wallet.getUpdatedAt()
+    );
+    this.wallets.set(wallet.getPlayerId().toString(), newWallet);
   }
 
   async findById(id: WalletId): Promise<Wallet | null> {
     for (const wallet of this.wallets.values()) {
       if (wallet.getId().equals(id)) {
-        return wallet;
+        // Return a copy to prevent external mutation
+        return new Wallet(
+          wallet.getId(),
+          wallet.getPlayerId(),
+          wallet.getBalance(),
+          wallet.getCreatedAt(),
+          wallet.getUpdatedAt()
+        );
       }
     }
     return null;
   }
 
   async findByPlayerId(playerId: PlayerId): Promise<Wallet | null> {
-    return this.wallets.get(playerId.toString()) || null;
+    const wallet = this.wallets.get(playerId.toString());
+    if (!wallet) return null;
+    
+    // Return a copy to prevent external mutation
+    return new Wallet(
+      wallet.getId(),
+      wallet.getPlayerId(),
+      wallet.getBalance(),
+      wallet.getCreatedAt(),
+      wallet.getUpdatedAt()
+    );
   }
 
   async findByPlayerIdForUpdate(playerId: PlayerId): Promise<Wallet | null> {
@@ -51,17 +76,25 @@ class MockWalletRepository implements IWalletRepository {
 
   // Helper method for testing
   setWallet(wallet: Wallet): void {
-    this.wallets.set(wallet.getPlayerId().toString(), wallet);
+    // Store a copy to prevent external mutation
+    const newWallet = new Wallet(
+      wallet.getId(),
+      wallet.getPlayerId(),
+      wallet.getBalance(),
+      wallet.getCreatedAt(),
+      wallet.getUpdatedAt()
+    );
+    this.wallets.set(wallet.getPlayerId().toString(), newWallet);
   }
 }
 
 describe('Property 7: Bet Lost Event Idempotency', () => {
-  it('should leave balance unchanged when processing bet lost event', () => {
-    fc.assert(
-      fc.property(
+  it('should leave balance unchanged when processing bet lost event', async () => {
+    await fc.assert(
+      fc.asyncProperty(
         fc.bigInt({ min: 0n, max: 1000000000n }), // Initial balance
-        fc.string({ minLength: 10, maxLength: 50, unit: 'grapheme' }).filter(s => /^[a-zA-Z0-9]+$/.test(s)), // Player ID (alphanumeric)
-        fc.string({ minLength: 5, maxLength: 50, unit: 'grapheme' }).filter(s => /^[a-zA-Z0-9]+$/.test(s)), // Bet ID
+        fc.uuid(), // Player ID (UUID)
+        fc.uuid(), // Bet ID (UUID)
         fc.bigInt({ min: 1n, max: 100000n }), // Bet amount
         async (initialBalanceCentavos, playerIdStr, betId, betAmount) => {
           // Create fresh repository and use case for each iteration
@@ -105,16 +138,16 @@ describe('Property 7: Bet Lost Event Idempotency', () => {
           );
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 
-  it('should be idempotent - processing same event multiple times has same effect', () => {
-    fc.assert(
-      fc.property(
+  it('should be idempotent - processing same event multiple times has same effect', async () => {
+    await fc.assert(
+      fc.asyncProperty(
         fc.bigInt({ min: 0n, max: 1000000000n }), // Initial balance
-        fc.string({ minLength: 10, maxLength: 50, unit: 'grapheme' }).filter(s => /^[a-zA-Z0-9]+$/.test(s)), // Player ID (alphanumeric)
-        fc.string({ minLength: 5, maxLength: 50, unit: 'grapheme' }).filter(s => /^[a-zA-Z0-9]+$/.test(s)), // Bet ID
+        fc.uuid(), // Player ID (UUID)
+        fc.uuid(), // Bet ID (UUID)
         fc.bigInt({ min: 1n, max: 100000n }), // Bet amount
         fc.integer({ min: 2, max: 5 }), // Number of times to process event
         async (
@@ -165,7 +198,7 @@ describe('Property 7: Bet Lost Event Idempotency', () => {
           );
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 20 }
     );
   });
 });

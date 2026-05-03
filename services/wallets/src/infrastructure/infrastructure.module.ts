@@ -19,7 +19,6 @@ import { Module } from '@nestjs/common';
 import { PrismaService } from './database/prisma.service';
 import { PrismaWalletRepository } from './database/prisma-wallet.repository';
 import { RabbitMQPublisher } from './messaging/rabbitmq-publisher';
-import { RabbitMQConsumer } from './messaging/rabbitmq-consumer';
 import { IWalletRepository } from '../domain/wallet-repository';
 import { IEventPublisher } from './messaging/event-publisher.interface';
 
@@ -42,31 +41,28 @@ export const EVENT_PUBLISHER = 'IEventPublisher';
     
     // Repository implementation
     {
-      provide: WALLET_REPOSITORY,
+      provide: 'IWalletRepository',
       useClass: PrismaWalletRepository,
     },
     
     // Message broker publisher
     {
-      provide: EVENT_PUBLISHER,
-      useClass: RabbitMQPublisher,
+      provide: 'IEventPublisher',
+      useFactory: () => {
+        // Create RabbitMQPublisher with default configuration
+        return new RabbitMQPublisher();
+      },
     },
-    
-    // Message broker consumer
-    RabbitMQConsumer,
   ],
   exports: [
     // Export PrismaService for direct use in health checks
     PrismaService,
     
     // Export repository for use in application layer
-    WALLET_REPOSITORY,
+    'IWalletRepository',
     
     // Export event publisher for use in application layer
-    EVENT_PUBLISHER,
-    
-    // Export consumer for health checks and lifecycle management
-    RabbitMQConsumer,
+    'IEventPublisher',
   ],
 })
 export class InfrastructureModule {}

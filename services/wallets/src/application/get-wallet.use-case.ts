@@ -6,7 +6,7 @@
  * Requirements: 2.1, 2.2, 2.3
  */
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { IWalletRepository } from '../domain/wallet-repository';
 import { PlayerId } from '../domain/player-id';
 import { WalletResponseDto } from './dtos';
@@ -16,7 +16,7 @@ export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 @Injectable()
 export class GetWalletUseCase {
-  constructor(private readonly walletRepository: IWalletRepository) {}
+  constructor(@Inject('IWalletRepository') private readonly walletRepository: IWalletRepository) {}
 
   /**
    * Executes the get wallet use case.

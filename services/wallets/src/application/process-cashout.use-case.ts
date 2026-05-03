@@ -7,7 +7,7 @@
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 7.1, 7.2
  */
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { IWalletRepository } from '../domain/wallet-repository';
 import type { IEventPublisher } from '../infrastructure/messaging/event-publisher.interface';
 import { PlayerId } from '../domain/player-id';
@@ -21,8 +21,8 @@ export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 @Injectable()
 export class ProcessCashoutUseCase {
   constructor(
-    private readonly walletRepository: IWalletRepository,
-    private readonly eventPublisher: IEventPublisher
+    @Inject('IWalletRepository') private readonly walletRepository: IWalletRepository,
+    @Inject('IEventPublisher') private readonly eventPublisher: IEventPublisher
   ) {}
 
   /**

@@ -16,10 +16,10 @@ import {
 } from '../../../src/application/dtos';
 
 describe('CreateWalletDto', () => {
-  it('should be valid (empty DTO)', async () => {
+  it('should be instantiable (empty DTO - playerId from JWT)', () => {
     const dto = new CreateWalletDto();
-    const errors = await validate(dto);
-    expect(errors.length).toBe(0);
+    expect(dto).toBeDefined();
+    expect(dto).toBeInstanceOf(CreateWalletDto);
   });
 });
 

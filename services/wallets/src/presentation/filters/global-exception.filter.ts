@@ -180,9 +180,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Handle structured error response
     if (typeof response === 'object' && response !== null) {
       const errorResponse = response as Record<string, unknown>;
+      
+      // Check if the response has a nested error object with code
+      if (errorResponse.error && typeof errorResponse.error === 'object') {
+        const nestedError = errorResponse.error as Record<string, unknown>;
+        return {
+          status,
+          errorCode: (nestedError.code as string) || this.getErrorCodeFromStatus(status),
+          message: (nestedError.message as string) || (errorResponse.message as string) || exception.message,
+          details: nestedError.details ? (nestedError.details as Record<string, unknown>) : undefined,
+        };
+      }
+      
+      // Handle flat error response
       return {
         status,
-        errorCode: this.getErrorCodeFromStatus(status),
+        errorCode: (errorResponse.code as string) || this.getErrorCodeFromStatus(status),
         message: (errorResponse.message as string) || exception.message,
         details: errorResponse.error ? (errorResponse.error as Record<string, unknown>) : undefined,
       };

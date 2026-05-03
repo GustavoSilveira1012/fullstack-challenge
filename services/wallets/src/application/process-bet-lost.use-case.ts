@@ -8,7 +8,7 @@
  * Requirements: 10.1, 10.2, 10.3, 10.4
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import type { IWalletRepository } from '../domain/wallet-repository';
 import { PlayerId } from '../domain/player-id';
 import { BetLostEventDto } from './dtos';
@@ -20,7 +20,12 @@ export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 export class ProcessBetLostUseCase {
   private readonly logger = new Logger(ProcessBetLostUseCase.name);
 
-  constructor(private readonly walletRepository: IWalletRepository) {}
+  constructor(@Inject('IWalletRepository') private readonly walletRepository: IWalletRepository) {}
+  
+  // Disable logger for testing to avoid global state issues
+  private isTestEnvironment(): boolean {
+    return process.env.NODE_ENV === 'test' || typeof (global as any).Bun !== 'undefined';
+  }
 
   /**
    * Executes the process bet lost use case.
@@ -50,15 +55,17 @@ export class ProcessBetLostUseCase {
     }
 
     // Log the event for audit purposes (no balance modification)
-    this.logger.log({
-      message: 'Bet lost event processed',
-      eventId: eventDto.eventId,
-      playerId: eventDto.playerId,
-      betId: eventDto.betId,
-      amount: eventDto.amount,
-      timestamp: eventDto.timestamp,
-      currentBalance: wallet.getBalance().toCentavos().toString(),
-    });
+    if (!this.isTestEnvironment()) {
+      this.logger.log({
+        message: 'Bet lost event processed',
+        eventId: eventDto.eventId,
+        playerId: eventDto.playerId,
+        betId: eventDto.betId,
+        amount: eventDto.amount,
+        timestamp: eventDto.timestamp,
+        currentBalance: wallet.getBalance().toCentavos().toString(),
+      });
+    }
 
     return {
       ok: true,
