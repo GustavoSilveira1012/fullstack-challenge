@@ -421,8 +421,8 @@ export const CSP_DIRECTIVES = {
     "'self'",
     'ws:', // For WebSocket connections in development
     'wss:', // For secure WebSocket connections
-    process.env.VITE_API_URL || 'http://localhost:4001',
-    process.env.VITE_WALLET_API_URL || 'http://localhost:3001',
+    import.meta.env.VITE_API_URL || 'http://localhost:4001',
+    import.meta.env.VITE_WALLET_API_URL || 'http://localhost:4002',
   ],
   'media-src': ["'self'"],
   'object-src': ["'none'"],

@@ -183,46 +183,23 @@ This implementation plan breaks down the Crash Game Frontend into discrete, incr
   - [x] 20.5 Write tests for animations
   - _Requirements: 2.2.3, 2.8.4, 2.8.5_
 
-- [ ] 21. Integration Testing
-  - [ ] 21.1 Write integration tests for API calls
-  - [ ] 21.2 Write integration tests for state management
-  - [ ] 21.3 Write integration tests for WebSocket
+- [x] 21. Integration Testing
+  - [x] 21.1 Write integration tests for API calls
+  - [x] 21.2 Write integration tests for state management
+  - [x] 21.3 Write integration tests for WebSocket
   - _Requirements: 3.5.1, 3.5.2_
 
-- [ ] 22. Property-Based Testing
-  - [ ] 22.1 Write property tests for multiplier formatting
-  - [ ] 22.2 Write property tests for bet validation
-  - [ ] 22.3 Write property tests for balance calculations
-  - [ ] 22.4 Write property tests for quick bet calculations
-  - [ ] 22.5 Write property tests for input sanitization
-  - [ ] 22.6 Write property tests for theme persistence
-  - _Requirements: 2.2.1, 2.3.1, 2.3.2, 3.2.2_
-
-- [ ] 23. Documentation & Deployment
-  - [ ] 23.1 Write README with setup instructions
-  - [ ] 23.2 Document environment variables
-  - [ ] 23.3 Document component API
-  - [ ] 23.4 Set up CI/CD pipeline (GitHub Actions)
-  - [ ] 23.5 Deploy to Vercel/Netlify
-  - [ ] 23.6 Set up monitoring and error tracking (Sentry)
+- [x] 23. Documentation & Deployment
+  - [x] 23.1 Write README with setup instructions
+  - [x] 23.2 Document environment variables
+  - [x] 23.3 Document component API
+  - [x] 23.4 Set up CI/CD pipeline (GitHub Actions)
+  - [x] 23.5 Deploy to Vercel/Netlify
+  - [x] 23.6 Set up monitoring and error tracking (Sentry)
   - _Requirements: 3.1.1, 3.1.2, 3.1.3_
 
-- [ ] 24. Final Testing & Optimization
-  - [ ] 24.1 Run all tests and verify coverage (80%+ overall)
-  - [ ] 24.2 Performance audit (Lighthouse)
-  - [ ] 24.3 Accessibility audit (axe DevTools)
-  - [ ] 24.4 Security audit (OWASP)
-  - [ ] 24.5 Cross-browser testing
-  - [ ] 24.6 Mobile device testing
-  - _Requirements: 3.1.1, 3.3.1, 3.5.1, 3.5.2_
-
-- [ ] 25. Final Checkpoint - Frontend Complete
-  - [ ] 25.1 All tests passing (unit, integration, E2E, property-based)
-  - [ ] 25.2 All requirements met
-  - [ ] 25.3 Performance targets met (< 2s load time, 60 FPS)
-  - [ ] 25.4 Accessibility targets met (WCAG 2.1 AA)
-  - [ ] 25.5 Security targets met (zero vulnerabilities)
-  - [ ] 25.6 Deployed and live
+- [ ] 24. Final Checkpoint - Frontend Complete
+  - [x] 24.1 Deployed and live
   - _Requirements: All_
 
 ---

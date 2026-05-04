@@ -1,0 +1,469 @@
+name: Frontend CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+env:
+  NODE_VERSION: '18'
+  WORKING_DIRECTORY: './frontend'
+
+jobs:
+  # Job 1: Code Quality and Linting
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Run ESLint
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run lint
+        
+      - name: Check TypeScript
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx tsc --noEmit
+        
+      - name: Check formatting (Prettier)
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+
+  # Job 2: Unit and Integration Tests
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Run unit tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run test:coverage
+        env:
+          CI: true
+          
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ${{ env.WORKING_DIRECTORY }}/coverage
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+
+  # Job 3: Accessibility Tests
+  accessibility:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Build application
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:4001
+          VITE_WALLET_API_URL: http://localhost:3001
+          VITE_KEYCLOAK_URL: http://localhost:8080
+          VITE_KEYCLOAK_REALM: crash-game
+          VITE_KEYCLOAK_CLIENT_ID: crash-game-frontend
+          VITE_WS_URL: ws://localhost:4001/games/ws
+          
+      - name: Start preview server
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm run preview &
+          sleep 10
+          
+      - name: Run accessibility tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npx @axe-core/cli http://localhost:4173 \
+            --exit \
+            --save accessibility-report.json \
+            --tags wcag2a,wcag2aa
+            
+      - name: Upload accessibility report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: accessibility-report
+          path: ${{ env.WORKING_DIRECTORY }}/accessibility-report.json
+
+  # Job 4: Security Audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Run security audit
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm audit --audit-level=moderate
+        
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=${{ env.WORKING_DIRECTORY }}/package.json
+
+  # Job 5: Build and Performance Tests
+  build:
+    name: Build & Performance
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    
+    strategy:
+      matrix:
+        environment: [development, production]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Build for development
+        if: matrix.environment == 'development'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+        env:
+          NODE_ENV: development
+          VITE_API_URL: http://localhost:4001
+          VITE_WALLET_API_URL: http://localhost:3001
+          VITE_KEYCLOAK_URL: http://localhost:8080
+          VITE_KEYCLOAK_REALM: crash-game
+          VITE_KEYCLOAK_CLIENT_ID: crash-game-frontend
+          VITE_WS_URL: ws://localhost:4001/games/ws
+          VITE_LOG_LEVEL: debug
+          
+      - name: Build for production
+        if: matrix.environment == 'production'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_WALLET_API_URL: ${{ secrets.VITE_WALLET_API_URL }}
+          VITE_KEYCLOAK_URL: ${{ secrets.VITE_KEYCLOAK_URL }}
+          VITE_KEYCLOAK_REALM: ${{ secrets.VITE_KEYCLOAK_REALM }}
+          VITE_KEYCLOAK_CLIENT_ID: ${{ secrets.VITE_KEYCLOAK_CLIENT_ID }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+          VITE_LOG_LEVEL: error
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          
+      - name: Analyze bundle size
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build:analyze
+        
+      - name: Check bundle size limits
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Check if main bundle is under 500KB
+          BUNDLE_SIZE=$(du -k dist/assets/*.js | sort -nr | head -1 | cut -f1)
+          if [ $BUNDLE_SIZE -gt 500 ]; then
+            echo "Bundle size ($BUNDLE_SIZE KB) exceeds limit (500 KB)"
+            exit 1
+          fi
+          echo "Bundle size: $BUNDLE_SIZE KB (within limit)"
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ matrix.environment }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          retention-days: 7
+
+  # Job 6: End-to-End Tests
+  e2e:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crash_game_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-development
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          
+      - name: Start backend services
+        run: |
+          # Start mock backend services for E2E tests
+          cd services
+          npm ci
+          npm run start:test &
+          sleep 30
+          
+      - name: Start frontend preview
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm run preview &
+          sleep 10
+          
+      - name: Install Playwright
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx playwright install --with-deps
+        
+      - name: Run E2E tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx playwright test
+        env:
+          BASE_URL: http://localhost:4173
+          
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-results
+          path: ${{ env.WORKING_DIRECTORY }}/test-results
+
+  # Job 7: Performance Audit
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    needs: [build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-production
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          
+      - name: Start preview server
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm run preview &
+          sleep 10
+          
+      - name: Run Lighthouse CI
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: lighthouse-report
+          path: ${{ env.WORKING_DIRECTORY }}/.lighthouseci
+
+  # Job 8: Deploy to Staging (on develop branch)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [lint, test, security, build, e2e]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    environment:
+      name: staging
+      url: https://crash-game-staging.vercel.app
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-development
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          
+      - name: Deploy to Vercel (Staging)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ${{ env.WORKING_DIRECTORY }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          alias-domains: crash-game-staging.vercel.app
+
+  # Job 9: Deploy to Production (on main branch)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [lint, test, security, build, e2e, lighthouse]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: https://crash-game.vercel.app
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-production
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ${{ env.WORKING_DIRECTORY }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-args: '--prod'
+          alias-domains: crash-game.vercel.app
+          
+      - name: Notify deployment success
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: success
+          text: '🚀 Frontend deployed to production successfully!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Notify deployment failure
+        uses: 8398a7/action-slack@v3
+        if: failure()
+        with:
+          status: failure
+          text: '❌ Frontend deployment to production failed!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Job 10: Post-deployment Health Check
+  health-check:
+    name: Post-deployment Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Wait for deployment
+        run: sleep 60
+        
+      - name: Health check
+        run: |
+          # Check if the application is responding
+          curl -f https://crash-game.vercel.app || exit 1
+          
+          # Check if critical resources load
+          curl -f https://crash-game.vercel.app/assets/ || exit 1
+          
+      - name: Run smoke tests
+        run: |
+          # Basic smoke tests to ensure the app is working
+          curl -s https://crash-game.vercel.app | grep -q "Crash Game" || exit 1
+          echo "✅ Application is healthy and responding"

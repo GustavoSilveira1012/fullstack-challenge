@@ -66,9 +66,10 @@ export const useAuth = () => {
   /**
    * Perform login redirect to Keycloak
    */
-  const performLogin = useCallback(() => {
+  const performLogin = useCallback(async () => {
     try {
-      authService.login();
+      setIsLoading(true);
+      await authService.login();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -76,6 +77,8 @@ export const useAuth = () => {
         type: 'error',
         message: errorMessage,
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [addNotification]);
 

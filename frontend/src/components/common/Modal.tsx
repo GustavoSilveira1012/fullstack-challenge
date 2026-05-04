@@ -83,7 +83,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal */}
       <div
-        ref={focusTrapRef}
+        ref={focusTrapRef as React.RefObject<HTMLDivElement>}
         className={`
           relative bg-white dark:bg-gray-800 rounded-lg shadow-xl
           w-full ${sizeClasses[size]}

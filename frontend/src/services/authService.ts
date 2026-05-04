@@ -23,13 +23,22 @@ class AuthService {
    * Get Keycloak login URL
    * Requirement 2.1.1: Login page redirects to Keycloak
    */
-  getLoginUrl(): string {
+  async getLoginUrl(): Promise<string> {
+    // Generate PKCE parameters
+    const codeVerifier = this.generateCodeVerifier();
+    const codeChallenge = await this.generateCodeChallenge(codeVerifier);
+    
+    // Store code verifier for token exchange
+    sessionStorage.setItem('code_verifier', codeVerifier);
+    
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
       scope: 'openid profile email',
       state: this.generateState(),
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256'
     });
 
     return `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/auth?${params.toString()}`;
@@ -53,11 +62,17 @@ class AuthService {
    */
   async exchangeCodeForToken(code: string): Promise<KeycloakTokenResponse> {
     try {
+      const codeVerifier = sessionStorage.getItem('code_verifier');
+      if (!codeVerifier) {
+        throw new Error('Code verifier not found');
+      }
+
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
         client_id: this.clientId,
         code,
         redirect_uri: this.redirectUri,
+        code_verifier: codeVerifier,
       });
 
       const response = await fetch(
@@ -72,10 +87,15 @@ class AuthService {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to exchange code for token');
+        const errorData = await response.text();
+        throw new Error(`Failed to exchange code for token: ${errorData}`);
       }
 
       const data = await response.json();
+      
+      // Clear the code verifier after use
+      sessionStorage.removeItem('code_verifier');
+      
       return data as KeycloakTokenResponse;
     } catch (error) {
       throw new Error(`Token exchange failed: ${(error as Error).message}`);
@@ -176,8 +196,9 @@ class AuthService {
    * Perform login flow
    * 1. Redirect to Keycloak login
    */
-  login(): void {
-    window.location.href = this.getLoginUrl();
+  async login(): Promise<void> {
+    const loginUrl = await this.getLoginUrl();
+    window.location.href = loginUrl;
   }
 
   /**
@@ -223,6 +244,38 @@ class AuthService {
     crypto.getRandomValues(array);
     return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
+
+  /**
+   * Generate PKCE code verifier
+   */
+  private generateCodeVerifier(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode.apply(null, array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+  /**
+   * Generate PKCE code challenge
+   */
+  private async generateCodeChallenge(verifier: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    
+    // Use crypto.subtle.digest for proper SHA256
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    
+    // Convert to base64url
+    return btoa(String.fromCharCode.apply(null, Array.from(hashArray)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+
 }
 
 export const authService = new AuthService();

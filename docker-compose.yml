@@ -138,16 +138,29 @@ services:
       start_period: 15s
 
   # ---------------------------------------------------------------------------
-  # Frontend (placeholder — candidate implements)
+  # Frontend
   # ---------------------------------------------------------------------------
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - kong
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      kong:
+        condition: service_healthy
+      games:
+        condition: service_healthy
+      wallets:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
 volumes:
   postgres_data:
