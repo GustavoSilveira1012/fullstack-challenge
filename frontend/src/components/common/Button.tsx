@@ -12,10 +12,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white disabled:bg-gray-400',
-  secondary: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white disabled:bg-gray-400',
-  danger: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white disabled:bg-gray-400',
-  success: 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white disabled:bg-gray-400',
+  primary: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white disabled:bg-gray-400 hover:shadow-lg transform hover:scale-105 active:scale-95',
+  secondary: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white disabled:bg-gray-400 hover:shadow-lg transform hover:scale-105 active:scale-95',
+  danger: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white disabled:bg-gray-400 hover:shadow-lg transform hover:scale-105 active:scale-95',
+  success: 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white disabled:bg-gray-400 hover:shadow-lg transform hover:scale-105 active:scale-95',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -53,9 +53,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={`
           inline-flex items-center justify-center
           font-semibold rounded-lg
-          transition-all duration-200
+          transition-all duration-200 ease-in-out
           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-          disabled:cursor-not-allowed
+          disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100
+          shadow-md hover:shadow-lg
           ${variantStyles[variant]}
           ${sizeStyles[size]}
           ${className}

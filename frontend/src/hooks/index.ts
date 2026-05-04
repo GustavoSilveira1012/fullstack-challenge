@@ -10,3 +10,6 @@ export { useWebSocket } from './useWebSocket';
 export { useNotification } from './useNotification';
 export { useLocalStorage } from './useLocalStorage';
 export { useTheme } from './useTheme';
+export { useSound } from './useSound';
+export { useErrorRecovery } from './useErrorRecovery';
+export { useAsyncState, useAsyncCallback, useAsyncEffect } from './useAsyncState';

@@ -205,7 +205,7 @@ describe('LiveActivity Component', () => {
         roundState: 'RUNNING',
       });
 
-      const { container } = render(<LiveActivity />);
+      render(<LiveActivity />);
       const averageBetLabel = screen.queryByText('Average Bet');
       expect(averageBetLabel).not.toBeInTheDocument();
     });

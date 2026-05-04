@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '@store/gameStore';
 import { useUIStore } from '@store/uiStore';
 import WebSocketService from '@services/webSocketService';
-import { WebSocketMessage } from '@types/api';
+import { WebSocketMessage } from '../types/api';
 
 /**
  * useWebSocket Hook: Manages WebSocket connection for real-time updates

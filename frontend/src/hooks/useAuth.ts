@@ -20,17 +20,20 @@ export const useAuth = () => {
     const storedToken = localStorage.getItem('token');
     const storedPlayerId = localStorage.getItem('playerId');
     const storedEmail = localStorage.getItem('email');
+    const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
 
-    if (storedToken && storedPlayerId && storedEmail) {
+    if (storedToken && storedPlayerId && storedEmail && storedIsAuthenticated === 'true') {
       // Check if token is expired
       if (!authService.isTokenExpired(storedToken)) {
-        setToken(storedToken);
+        // Restore auth state
+        const authStore = useAuthStore.getState();
+        authStore.login(storedToken, storedPlayerId, storedEmail);
       } else {
         // Token expired, clear auth state
         logout();
       }
     }
-  }, [setToken, logout]);
+  }, [logout]);
 
   /**
    * Handle OAuth2 callback after Keycloak redirects back

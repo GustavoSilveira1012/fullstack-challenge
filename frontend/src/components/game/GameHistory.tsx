@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useGameStore } from '@store/gameStore';
-import { Round } from '@types/index';
+import type { Round } from '@types/index';
 import { Badge } from '@components/common';
 
 /**

@@ -125,7 +125,7 @@ describe('GameHistory Component', () => {
 
       render(<GameHistory />);
       // The first round is 1 minute ago, so it should display "1m ago"
-      expect(screen.getByText(/ago/)).toBeInTheDocument();
+      expect(screen.getAllByText(/ago/)).toHaveLength(2);
     });
   });
 

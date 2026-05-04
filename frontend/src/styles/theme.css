@@ -1,0 +1,400 @@
+/**
+ * Theme-specific CSS Variables and Utilities
+ * Provides consistent theming across the application
+ * Ensures WCAG AA color contrast compliance
+ */
+
+/* CSS Custom Properties for Theme Colors */
+:root {
+  /* Light Theme Colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-tertiary: #f1f5f9;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  
+  /* Interactive Elements */
+  --color-button-primary: #1d4ed8;
+  --color-button-primary-hover: #1e40af;
+  --color-button-primary-active: #1e3a8a;
+  
+  --color-button-secondary: #f1f5f9;
+  --color-button-secondary-hover: #e2e8f0;
+  --color-button-secondary-active: #cbd5e1;
+  
+  --color-button-danger: #dc2626;
+  --color-button-danger-hover: #b91c1c;
+  --color-button-danger-active: #991b1b;
+  
+  --color-button-success: #059669;
+  --color-button-success-hover: #047857;
+  --color-button-success-active: #065f46;
+  
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Game-specific Colors */
+  --color-multiplier-low: #10b981;
+  --color-multiplier-medium: #f59e0b;
+  --color-multiplier-high: #ef4444;
+  --color-crash: #ef4444;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Focus Ring */
+  --focus-ring: 0 0 0 2px var(--color-button-primary);
+  --focus-ring-offset: 0 0 0 2px var(--color-bg-primary);
+}
+
+/* Dark Theme Colors */
+.dark {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-tertiary: #334155;
+  
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  
+  --color-border: #334155;
+  --color-border-light: #475569;
+  
+  /* Interactive Elements */
+  --color-button-primary: #3b82f6;
+  --color-button-primary-hover: #2563eb;
+  --color-button-primary-active: #1d4ed8;
+  
+  --color-button-secondary: #334155;
+  --color-button-secondary-hover: #475569;
+  --color-button-secondary-active: #64748b;
+  
+  --color-button-danger: #ef4444;
+  --color-button-danger-hover: #dc2626;
+  --color-button-danger-active: #b91c1c;
+  
+  --color-button-success: #10b981;
+  --color-button-success-hover: #059669;
+  --color-button-success-active: #047857;
+  
+  /* Shadows for Dark Mode */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  
+  /* Focus Ring for Dark Mode */
+  --focus-ring-offset: 0 0 0 2px var(--color-bg-primary);
+}
+
+/* Theme Utility Classes */
+@layer utilities {
+  /* Background Colors */
+  .bg-theme-primary {
+    background-color: var(--color-bg-primary);
+  }
+  
+  .bg-theme-secondary {
+    background-color: var(--color-bg-secondary);
+  }
+  
+  .bg-theme-tertiary {
+    background-color: var(--color-bg-tertiary);
+  }
+  
+  /* Text Colors */
+  .text-theme-primary {
+    color: var(--color-text-primary);
+  }
+  
+  .text-theme-secondary {
+    color: var(--color-text-secondary);
+  }
+  
+  .text-theme-muted {
+    color: var(--color-text-muted);
+  }
+  
+  /* Border Colors */
+  .border-theme {
+    border-color: var(--color-border);
+  }
+  
+  .border-theme-light {
+    border-color: var(--color-border-light);
+  }
+  
+  /* Button Styles */
+  .btn-theme-primary {
+    background-color: var(--color-button-primary);
+    color: white;
+    border: 1px solid var(--color-button-primary);
+  }
+  
+  .btn-theme-primary:hover {
+    background-color: var(--color-button-primary-hover);
+    border-color: var(--color-button-primary-hover);
+  }
+  
+  .btn-theme-primary:active {
+    background-color: var(--color-button-primary-active);
+    border-color: var(--color-button-primary-active);
+  }
+  
+  .btn-theme-secondary {
+    background-color: var(--color-button-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+  
+  .btn-theme-secondary:hover {
+    background-color: var(--color-button-secondary-hover);
+    border-color: var(--color-border);
+  }
+  
+  .btn-theme-secondary:active {
+    background-color: var(--color-button-secondary-active);
+    border-color: var(--color-border);
+  }
+  
+  .btn-theme-danger {
+    background-color: var(--color-button-danger);
+    color: white;
+    border: 1px solid var(--color-button-danger);
+  }
+  
+  .btn-theme-danger:hover {
+    background-color: var(--color-button-danger-hover);
+    border-color: var(--color-button-danger-hover);
+  }
+  
+  .btn-theme-danger:active {
+    background-color: var(--color-button-danger-active);
+    border-color: var(--color-button-danger-active);
+  }
+  
+  .btn-theme-success {
+    background-color: var(--color-button-success);
+    color: white;
+    border: 1px solid var(--color-button-success);
+  }
+  
+  .btn-theme-success:hover {
+    background-color: var(--color-button-success-hover);
+    border-color: var(--color-button-success-hover);
+  }
+  
+  .btn-theme-success:active {
+    background-color: var(--color-button-success-active);
+    border-color: var(--color-button-success-active);
+  }
+  
+  /* Focus Styles */
+  .focus-theme {
+    outline: none;
+    box-shadow: var(--focus-ring-offset), var(--focus-ring);
+  }
+  
+  /* Shadow Utilities */
+  .shadow-theme-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .shadow-theme-md {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .shadow-theme-lg {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Multiplier Colors */
+  .text-multiplier-low {
+    color: var(--color-multiplier-low);
+  }
+  
+  .text-multiplier-medium {
+    color: var(--color-multiplier-medium);
+  }
+  
+  .text-multiplier-high {
+    color: var(--color-multiplier-high);
+  }
+  
+  .bg-multiplier-low {
+    background-color: var(--color-multiplier-low);
+  }
+  
+  .bg-multiplier-medium {
+    background-color: var(--color-multiplier-medium);
+  }
+  
+  .bg-multiplier-high {
+    background-color: var(--color-multiplier-high);
+  }
+  
+  /* Status Colors */
+  .text-status-success {
+    color: var(--color-success);
+  }
+  
+  .text-status-warning {
+    color: var(--color-warning);
+  }
+  
+  .text-status-danger {
+    color: var(--color-danger);
+  }
+  
+  .text-status-info {
+    color: var(--color-info);
+  }
+  
+  .bg-status-success {
+    background-color: var(--color-success);
+  }
+  
+  .bg-status-warning {
+    background-color: var(--color-warning);
+  }
+  
+  .bg-status-danger {
+    background-color: var(--color-danger);
+  }
+  
+  .bg-status-info {
+    background-color: var(--color-info);
+  }
+}
+
+/* Component-specific Theme Styles */
+@layer components {
+  /* Card Component */
+  .theme-card {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .theme-card-elevated {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Input Component */
+  .theme-input {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+  
+  .theme-input:focus {
+    outline: none;
+    border-color: var(--color-button-primary);
+    box-shadow: var(--focus-ring);
+  }
+  
+  .theme-input::placeholder {
+    color: var(--color-text-muted);
+  }
+  
+  /* Modal Component */
+  .theme-modal-backdrop {
+    background-color: rgb(0 0 0 / 0.5);
+  }
+  
+  .theme-modal-content {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Notification Component */
+  .theme-notification {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .theme-notification-success {
+    background-color: var(--color-success);
+    color: white;
+    border-color: var(--color-success);
+  }
+  
+  .theme-notification-warning {
+    background-color: var(--color-warning);
+    color: white;
+    border-color: var(--color-warning);
+  }
+  
+  .theme-notification-danger {
+    background-color: var(--color-danger);
+    color: white;
+    border-color: var(--color-danger);
+  }
+  
+  .theme-notification-info {
+    background-color: var(--color-info);
+    color: white;
+    border-color: var(--color-info);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: #000000;
+    --color-text-secondary: #000000;
+  }
+  
+  .dark {
+    --color-border: #ffffff;
+    --color-text-secondary: #ffffff;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-duration: 0ms;
+  }
+  
+  * {
+    transition-duration: var(--transition-duration) !important;
+    animation-duration: var(--transition-duration) !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  :root {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #ffffff;
+    --color-bg-tertiary: #ffffff;
+    --color-text-primary: #000000;
+    --color-text-secondary: #000000;
+    --color-text-muted: #666666;
+    --color-border: #000000;
+  }
+  
+  .dark {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #ffffff;
+    --color-bg-tertiary: #ffffff;
+    --color-text-primary: #000000;
+    --color-text-secondary: #000000;
+    --color-text-muted: #666666;
+    --color-border: #000000;
+  }
+}

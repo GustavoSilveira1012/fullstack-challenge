@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useGameStore } from '@store/gameStore';
 import { gameService } from '@services/gameService';
 import { useUIStore } from '@store/uiStore';
-import { RoundState } from '@types/index';
+import { RoundState } from '../types';
 
 /**
  * useGame Hook: Manages game logic and state

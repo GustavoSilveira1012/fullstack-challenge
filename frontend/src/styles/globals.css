@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import theme-specific styles */
+@import './theme.css';
+
 /* Global Styles */
 * {
   margin: 0;
@@ -19,6 +22,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code {
@@ -26,10 +30,41 @@ code {
     monospace;
 }
 
+/* Theme Transition */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
 /* Accessibility */
 :focus-visible {
-  outline: 2px solid #3B82F6;
+  outline: 2px solid theme('colors.primary.500');
   outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dark {
+    --tw-bg-opacity: 1;
+    background-color: rgb(0 0 0 / var(--tw-bg-opacity));
+    --tw-text-opacity: 1;
+    color: rgb(255 255 255 / var(--tw-text-opacity));
+  }
 }
 
 /* Scrollbar Styling */
@@ -43,24 +78,51 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9CA3AF;
+  background: theme('colors.gray.400');
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
+  background: theme('colors.gray.500');
 }
 
 /* Dark Mode Scrollbar */
 .dark ::-webkit-scrollbar-thumb {
-  background: #4B5563;
+  background: theme('colors.gray.600');
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
+  background: theme('colors.gray.500');
 }
 
-/* Animations */
+/* Custom Utility Classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-in-up {
+    animation: slideInUp 0.3s ease-in-out;
+  }
+  
+  .animate-slide-in-down {
+    animation: slideInDown 0.3s ease-in-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.5s ease-out;
+  }
+}
+
+/* Base Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -92,14 +154,262 @@ code {
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.animate-slide-in-up {
-  animation: slideInUp 0.3s ease-in-out;
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.animate-slide-in-down {
-  animation: slideInDown 0.3s ease-in-out;
+/* Game-specific Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes crashPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes flash {
+  0% { opacity: 0; }
+  10% { opacity: 0.8; }
+  20% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes fadeInDelay {
+  0% { opacity: 0; }
+  70% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes multiplierGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px theme('colors.primary.500');
+  }
+  50% {
+    box-shadow: 0 0 20px theme('colors.primary.400'), 0 0 30px theme('colors.primary.300');
+  }
+}
+
+@keyframes cashOutPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 theme('colors.success.500');
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+@keyframes buttonHover {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+/* Particle Animations for Crash Effect */
+@keyframes particle-0 {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-20px, -30px) scale(0); opacity: 0; }
+}
+
+@keyframes particle-1 {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(20px, -25px) scale(0); opacity: 0; }
+}
+
+@keyframes particle-2 {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-15px, 20px) scale(0); opacity: 0; }
+}
+
+@keyframes particle-3 {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(25px, 15px) scale(0); opacity: 0; }
+}
+
+/* Crash Animation Classes */
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-crashPulse {
+  animation: crashPulse 2s ease-in-out infinite;
+}
+
+.animate-flash {
+  animation: flash 0.3s ease-in-out;
+}
+
+.animate-fadeInDelay {
+  animation: fadeInDelay 2s ease-in-out;
+}
+
+.animate-multiplier-glow {
+  animation: multiplierGlow 2s ease-in-out infinite;
+}
+
+.animate-cash-out-pulse {
+  animation: cashOutPulse 1s ease-in-out infinite;
+}
+
+.animate-button-hover {
+  animation: buttonHover 0.2s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.3s ease-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.animate-particle-0 {
+  animation: particle-0 1.5s ease-out forwards;
+}
+
+.animate-particle-1 {
+  animation: particle-1 1.5s ease-out forwards;
+}
+
+.animate-particle-2 {
+  animation: particle-2 1.5s ease-out forwards;
+}
+
+.animate-particle-3 {
+  animation: particle-3 1.5s ease-out forwards;
+}
+
+/* Theme-specific Component Styles */
+@layer components {
+  .theme-card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
+  }
+  
+  .theme-button {
+    @apply bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white disabled:bg-gray-400 dark:disabled:bg-gray-600;
+  }
+  
+  .theme-button-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:active:bg-gray-500 dark:text-white;
+  }
+  
+  .theme-input {
+    @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500;
+  }
+  
+  .theme-text-primary {
+    @apply text-gray-900 dark:text-white;
+  }
+  
+  .theme-text-secondary {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+  
+  .theme-text-muted {
+    @apply text-gray-500 dark:text-gray-500;
+  }
+  
+  .theme-border {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+  
+  .theme-bg-primary {
+    @apply bg-white dark:bg-gray-900;
+  }
+  
+  .theme-bg-secondary {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
 }

@@ -156,7 +156,7 @@ describe('PlayerStats Component', () => {
       );
 
       // Profit = totalWon - totalWagered = 150000 - 100000 = 50000
-      expect(screen.getByText('R$ 500,00')).toBeInTheDocument();
+      expect(screen.getByText('+R$ 500,00')).toBeInTheDocument();
     });
 
     it('should calculate loss correctly', () => {
@@ -183,7 +183,7 @@ describe('PlayerStats Component', () => {
         />
       );
 
-      expect(screen.getByText('R$ 0,00')).toBeInTheDocument();
+      expect(screen.getByText('+R$ 0,00')).toBeInTheDocument();
     });
 
     it('should show + sign for positive profit', () => {

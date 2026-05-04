@@ -1,5 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useGameStore } from '@store/gameStore';
+import { useScreenReaderAnnouncement } from '@hooks/useFocusManagement';
+import { formatMultiplierForScreenReader } from '@utils/accessibility';
+import { CrashAnimation } from './CrashAnimation';
+import { useSound } from '@hooks/useSound';
 
 /**
  * MultiplierDisplay Component
@@ -16,6 +20,8 @@ interface MultiplierDisplayProps {
 
 export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className = '' }) => {
   const { currentMultiplier, roundState } = useGameStore();
+  const { announce } = useScreenReaderAnnouncement();
+  const { playSound } = useSound();
 
   /**
    * Determine color based on multiplier value
@@ -46,19 +52,57 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
    */
   const isCrashed = roundState === 'CRASHED';
 
+  /**
+   * Announce significant multiplier milestones to screen readers
+   */
+  useEffect(() => {
+    if (isLive && currentMultiplier > 1) {
+      const milestones = [2, 5, 10, 20, 50, 100];
+      const milestone = milestones.find(m => 
+        currentMultiplier >= m && currentMultiplier < m + 0.1
+      );
+      
+      if (milestone) {
+        announce(`Multiplier reached ${formatMultiplierForScreenReader(milestone)}`, 'polite');
+      }
+    }
+  }, [currentMultiplier, isLive, announce]);
+
+  /**
+   * Announce round state changes
+   */
+  useEffect(() => {
+    if (roundState === 'RUNNING') {
+      announce('Round started, multiplier is increasing', 'assertive');
+    } else if (roundState === 'CRASHED') {
+      announce(`Round crashed at ${formatMultiplierForScreenReader(currentMultiplier)}`, 'assertive');
+      // Play crash sound is handled by CrashAnimation component
+    } else if (roundState === 'BETTING') {
+      announce('New round starting, place your bets', 'polite');
+    }
+  }, [roundState, currentMultiplier, announce]);
+
   return (
-    <div
+    <section
       className={`flex flex-col items-center justify-center gap-4 ${className}`}
       role="region"
-      aria-label="Current multiplier display"
+      aria-labelledby="multiplier-heading"
       aria-live="polite"
-      aria-atomic="true"
+      aria-atomic="false"
     >
+      <h2 id="multiplier-heading" className="sr-only">
+        Current Game Multiplier
+      </h2>
+
       {/* LIVE Badge */}
       {isLive && (
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2" 
+          role="status" 
+          aria-label="Round is currently live and active"
+        >
           <div className="relative inline-flex items-center justify-center">
-            <div className="absolute inset-0 bg-green-500 rounded-full animate-pulse" />
+            <div className="absolute inset-0 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
             <div className="relative px-3 py-1 bg-green-600 text-white text-sm font-bold rounded-full">
               LIVE
             </div>
@@ -68,25 +112,52 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
 
       {/* Multiplier Display */}
       <div
-        className={`text-6xl md:text-7xl font-bold font-mono transition-colors duration-200 ${
-          isCrashed ? 'text-red-600' : multiplierColor
-        } ${isLive ? 'animate-pulse' : ''}`}
-        aria-label={`Current multiplier: ${formattedMultiplier}x`}
+        className={`text-6xl md:text-7xl font-bold font-mono transition-all duration-300 ${
+          isCrashed ? 'text-red-600 animate-shake' : multiplierColor
+        } ${isLive ? 'animate-multiplier-glow' : ''}`}
+        aria-label={`Current multiplier: ${formatMultiplierForScreenReader(currentMultiplier)}`}
+        role="status"
+        aria-live="assertive"
+        aria-atomic="true"
       >
+        <span className="sr-only">Multiplier: </span>
         {formattedMultiplier}
-        <span className="text-4xl md:text-5xl">x</span>
+        <span className="text-4xl md:text-5xl" aria-hidden="true">x</span>
       </div>
+
+      {/* Crash Animation */}
+      <CrashAnimation />
 
       {/* Crash Status */}
       {isCrashed && (
-        <div className="text-2xl font-bold text-red-600 animate-bounce">CRASHED</div>
+        <div 
+          className="text-2xl font-bold text-red-600 animate-bounce-in"
+          role="alert"
+          aria-label={`Game crashed at ${formatMultiplierForScreenReader(currentMultiplier)}`}
+        >
+          CRASHED
+        </div>
       )}
 
       {/* Betting Status */}
       {roundState === 'BETTING' && (
-        <div className="text-lg text-gray-500 dark:text-gray-400">Waiting for next round...</div>
+        <div 
+          className="text-lg text-gray-500 dark:text-gray-400"
+          role="status"
+          aria-label="Waiting for next round to start, you can place bets now"
+          id="multiplier-status"
+        >
+          Waiting for next round...
+        </div>
       )}
-    </div>
+
+      {/* Additional context for screen readers */}
+      <div className="sr-only" aria-live="polite">
+        {isLive && `Game is running. Current multiplier is ${formatMultiplierForScreenReader(currentMultiplier)}.`}
+        {isCrashed && `Game has crashed. Final multiplier was ${formatMultiplierForScreenReader(currentMultiplier)}.`}
+        {roundState === 'BETTING' && 'Betting phase is active. Place your bets now.'}
+      </div>
+    </section>
   );
 };
 

@@ -1,15 +1,174 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Crash Game - Real-time multiplier betting game" />
-    <meta name="theme-color" content="#3B82F6" />
-    <title>Crash Game</title>
+    
+    <!-- Performance: DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//api.crash-game.com" />
+    
+    <!-- Performance: Preconnect to critical origins -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    
+    <!-- Viewport and Mobile Optimization -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- SEO and Description -->
+    <meta name="description" content="Crash Game - Jogo de apostas com multiplicador em tempo real. Aposte, assista o multiplicador crescer e retire na hora certa!" />
+    <meta name="keywords" content="crash game, apostas, multiplicador, tempo real, jogo online" />
+    <meta name="author" content="Crash Game Team" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Crash Game - Jogo de Multiplicador" />
+    <meta property="og:description" content="Jogo de apostas com multiplicador em tempo real. Aposte, assista o multiplicador crescer e retire na hora certa!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://crash-game.com" />
+    <meta property="og:image" content="/assets/og-image.png" />
+    <meta property="og:locale" content="pt_BR" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Crash Game - Jogo de Multiplicador" />
+    <meta name="twitter:description" content="Jogo de apostas com multiplicador em tempo real" />
+    <meta name="twitter:image" content="/assets/twitter-image.png" />
+    
+    <!-- Theme Color Meta Tags -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    
+    <!-- Apple Mobile Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Crash Game" />
+    
+    <!-- Windows Phone Meta Tags -->
+    <meta name="msapplication-navbutton-color" content="#ffffff" />
+    <meta name="msapplication-TileColor" content="#3b82f6" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
+    
+    <!-- Content Security Policy (will be enhanced by JavaScript) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;" />
+    
+    <!-- Performance: Resource Hints -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="modulepreload" href="/src/App.tsx" />
+    
+    <!-- Prevent FOUC (Flash of Unstyled Content) -->
+    <style>
+      /* Critical CSS for initial render */
+      html {
+        background-color: #ffffff;
+        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        line-height: 1.5;
+      }
+      
+      /* Dark mode detection for initial load */
+      @media (prefers-color-scheme: dark) {
+        html {
+          background-color: #0f172a;
+          color: #f8fafc;
+        }
+      }
+      
+      /* Loading spinner for initial load */
+      .initial-loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 9999;
+      }
+      
+      @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        .initial-loading {
+          border-color: #334155;
+          border-top-color: #3b82f6;
+        }
+      }
+      
+      /* Hide loading spinner when app loads */
+      .app-loaded .initial-loading {
+        display: none;
+      }
+      
+      /* Prevent layout shift */
+      #root {
+        min-height: 100vh;
+      }
+      
+      /* Performance: Optimize font rendering */
+      * {
+        font-display: swap;
+      }
+    </style>
+    
+    <title>Crash Game - Jogo de Multiplicador em Tempo Real</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial loading spinner -->
+      <div class="initial-loading" aria-label="Carregando aplicação"></div>
+    </div>
+    
+    <!-- Performance: Load main script with module preload -->
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Performance: Hide loading spinner when app loads -->
+    <script>
+      window.addEventListener('load', function() {
+        document.body.classList.add('app-loaded');
+      });
+    </script>
+    
+    <!-- Performance: Service Worker registration fallback -->
+    <script>
+      // Fallback service worker registration for older browsers
+      if ('serviceWorker' in navigator && !window.SW_REGISTERED) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

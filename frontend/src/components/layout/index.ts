@@ -3,3 +3,4 @@ export { Notification, NotificationContainer } from './Notification';
 export { Header } from './Header';
 export { Sidebar } from './Sidebar';
 export { Footer } from './Footer';
+export { PageTransition, SlideTransition, ScaleTransition } from './PageTransition';

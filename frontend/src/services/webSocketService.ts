@@ -1,6 +1,7 @@
 import { useGameStore } from '../store/gameStore';
 import { useWalletStore } from '../store/walletStore';
 import { useUIStore } from '../store/uiStore';
+import { rateLimiter, sanitizeText } from '../utils/security';
 import {
   MultiplierUpdateMessage,
   RoundStateChangeMessage,
@@ -15,6 +16,8 @@ import {
  * Requirement 2.5.2: Handle multiplier updates
  * Requirement 2.5.3: Handle round state changes
  * Requirement 2.5.4: Handle wallet balance updates
+ * Requirement 3.2.3: Secure WebSocket connection (WSS)
+ * Requirement 3.2.4: Rate limiting for WebSocket messages
  */
 class WebSocketService {
   private ws: WebSocket | null = null;
@@ -28,9 +31,33 @@ class WebSocketService {
   private isIntentionallyClosed: boolean = false;
 
   constructor(url: string, token: string) {
-    this.url = url;
-    this.token = token;
+    // Ensure secure WebSocket connection in production
+    this.url = this.ensureSecureUrl(url);
+    this.token = sanitizeText(token); // Sanitize token
     this.setupMessageHandlers();
+  }
+
+  /**
+   * Ensure WebSocket URL uses secure connection (WSS) in production
+   * Requirement 3.2.3: Use HTTPS/WSS for all communication
+   */
+  private ensureSecureUrl(url: string): string {
+    // In production, always use WSS
+    if (import.meta.env.PROD && url.startsWith('ws://')) {
+      return url.replace('ws://', 'wss://');
+    }
+    
+    // In development, allow WS for localhost
+    if (import.meta.env.DEV && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+      return url;
+    }
+    
+    // Default to secure connection
+    if (url.startsWith('ws://')) {
+      return url.replace('ws://', 'wss://');
+    }
+    
+    return url;
   }
 
   /**
@@ -146,14 +173,28 @@ class WebSocketService {
   }
 
   /**
-   * Handle incoming WebSocket message
+   * Handle incoming WebSocket message with security validation
+   * Requirement 3.2.2: Validate all incoming data
    */
   private handleMessage(message: WebSocketMessage): void {
-    const handler = this.messageHandlers.get(message.type);
-    if (handler) {
-      handler(message);
-    } else {
-      console.warn(`[WebSocket] Unknown message type: ${message.type}`);
+    try {
+      // Validate message structure
+      if (!message || typeof message !== 'object' || !message.type) {
+        console.warn('[WebSocket] Invalid message format:', message);
+        return;
+      }
+
+      // Sanitize message type
+      const messageType = sanitizeText(message.type);
+      
+      const handler = this.messageHandlers.get(messageType);
+      if (handler) {
+        handler(message);
+      } else {
+        console.warn(`[WebSocket] Unknown message type: ${messageType}`);
+      }
+    } catch (error) {
+      console.error('[WebSocket] Error handling message:', error);
     }
   }
 
@@ -222,11 +263,22 @@ class WebSocketService {
   }
 
   /**
-   * Send message to WebSocket server
+   * Send message to WebSocket server with rate limiting
+   * Requirement 3.2.4: Rate limiting for WebSocket messages
    */
   send(message: any): void {
+    // Check rate limit for WebSocket messages
+    if (!rateLimiter.isAllowed('websocket-messages')) {
+      console.warn('[WebSocket] Rate limit exceeded for WebSocket messages');
+      return;
+    }
+
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+      try {
+        this.ws.send(JSON.stringify(message));
+      } catch (error) {
+        console.error('[WebSocket] Error sending message:', error);
+      }
     } else {
       console.warn('[WebSocket] Cannot send message: WebSocket not connected');
     }
