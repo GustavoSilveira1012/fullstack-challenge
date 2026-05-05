@@ -22,8 +22,8 @@ export const BetHistoryPage: React.FC = () => {
       try {
         setLoading(true);
         const response = await gameService.getPlayerBetHistory(page, 20);
-        setBets(response.bets || []);
-        setTotal(response.pagination?.total || 0);
+        setBets(response.data || []);
+        setTotal(response.total || 0);
       } catch (error) {
         console.error('Failed to fetch bet history:', error);
       } finally {

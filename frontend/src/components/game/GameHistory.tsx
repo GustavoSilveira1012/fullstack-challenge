@@ -33,7 +33,7 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ maxRounds = 20, classN
     const fetchHistory = async () => {
       try {
         const response = await gameService.getRoundHistory(1, maxRounds);
-        setHistoryRounds(response.rounds || []);
+        setHistoryRounds(response.data || []);
       } catch (error) {
         console.error('Failed to fetch round history:', error);
         // Fallback to store data

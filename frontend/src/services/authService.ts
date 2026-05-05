@@ -129,18 +129,19 @@ class AuthService {
       sessionStorage.removeItem('code_verifier');
       
       return data as KeycloakTokenResponse;
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as Error;
       console.error('Token exchange error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
+        name: err.name,
+        message: err.message,
+        stack: err.stack
       });
       
-      if (error.name === 'AbortError') {
+      if (err.name === 'AbortError') {
         throw new Error('Token exchange timed out after 30 seconds');
       }
       
-      throw new Error(`Token exchange failed: ${(error as Error).message}`);
+      throw new Error(`Token exchange failed: ${err.message}`);
     }
   }
 

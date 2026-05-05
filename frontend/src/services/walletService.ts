@@ -59,7 +59,7 @@ class WalletService {
           return {
             id: newWallet.id,
             playerId: newWallet.playerId,
-            balance: newWallet.balance, // This should already be a string from the API
+            balance: newWallet.balance.toString(), // Convert number to string to match GetWalletResponse type
             createdAt: newWallet.createdAt,
             updatedAt: newWallet.updatedAt
           };
