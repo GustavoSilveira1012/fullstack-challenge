@@ -28,7 +28,9 @@ export const CurrentRoundBets: React.FC<CurrentRoundBetsProps> = ({ className = 
     const fetchCurrentRound = async () => {
       try {
         const response = await gameService.getCurrentRound();
-        setBets(response.bets || []);
+        // CurrentRoundResponse doesn't include bets array
+        // This component will be updated via WebSocket in the future
+        setBets([]);
       } catch (error) {
         console.error('Failed to fetch current round bets:', error);
       } finally {

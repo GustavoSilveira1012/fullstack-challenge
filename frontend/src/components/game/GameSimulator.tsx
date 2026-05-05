@@ -42,35 +42,32 @@ export const GameSimulator: React.FC = () => {
     setMultiplier(1.0);
     setIsSimulating(true);
 
+    // Random crash point between 1.5x and 10x (matching backend minimum)
+    const crashPoint = 1.5 + Math.random() * 8.5;
+    let currentMultiplier = 1.0;
+
     // Simulate multiplier increase
     const interval = setInterval(() => {
-      setMultiplier(prev => {
-        const validPrev = typeof prev === 'number' && !isNaN(prev) ? prev : 1.0;
-        const newMultiplier = validPrev + 0.01;
+      currentMultiplier += 0.01;
+      
+      if (currentMultiplier >= crashPoint) {
+        // Crash the round
+        console.log('[Simulator] Round crashed at', currentMultiplier.toFixed(2));
+        setMultiplier(currentMultiplier);
+        setRoundState('CRASHED');
+        setIsSimulating(false);
+        clearInterval(interval);
         
-        // Random crash between 1.1x and 10x
-        const crashPoint = 1.1 + Math.random() * 8.9;
-        
-        if (newMultiplier >= crashPoint) {
-          // Crash the round
-          console.log('[Simulator] Round crashed at', newMultiplier.toFixed(2));
-          setRoundState('CRASHED');
-          setIsSimulating(false);
-          clearInterval(interval);
-          
-          // Start new betting phase after 3 seconds
-          setTimeout(() => {
-            console.log('[Simulator] Starting new betting phase');
-            setRoundState('BETTING');
-            setMultiplier(1.0);
-            setCurrentRound(null);
-          }, 3000);
-          
-          return newMultiplier;
-        }
-        
-        return newMultiplier;
-      });
+        // Start new betting phase after 3 seconds
+        setTimeout(() => {
+          console.log('[Simulator] Starting new betting phase');
+          setRoundState('BETTING');
+          setMultiplier(1.0);
+          setCurrentRound(null as any);
+        }, 3000);
+      } else {
+        setMultiplier(currentMultiplier);
+      }
     }, 100); // Update every 100ms
 
     setIntervalId(interval);
