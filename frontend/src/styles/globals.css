@@ -1,9 +1,7 @@
+@import './theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import theme-specific styles */
-@import './theme.css';
 
 /* Global Styles */
 * {

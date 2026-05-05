@@ -39,7 +39,7 @@ class SoundService {
         
         // Handle loading errors gracefully
         audio.addEventListener('error', (e) => {
-          console.warn(`Failed to load sound: ${soundType}`, e);
+          console.warn(`[SoundService] Failed to load sound: ${soundType}.mp3`, e);
         });
 
         // Prevent audio from blocking page load

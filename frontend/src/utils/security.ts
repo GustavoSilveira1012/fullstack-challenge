@@ -421,15 +421,16 @@ export const CSP_DIRECTIVES = {
     "'self'",
     'ws:', // For WebSocket connections in development
     'wss:', // For secure WebSocket connections
+    'http://localhost:*',
     import.meta.env.VITE_API_URL || 'http://localhost:4001',
     import.meta.env.VITE_WALLET_API_URL || 'http://localhost:4002',
+    import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080',
   ],
   'media-src': ["'self'"],
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
   'frame-ancestors': ["'none'"],
-  'upgrade-insecure-requests': [],
 };
 
 /**

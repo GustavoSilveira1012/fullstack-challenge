@@ -8,6 +8,12 @@ import { LoggingInterceptor, StructuredLogger } from "./infrastructure/logging";
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   
+  app.enableCors({
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
+  
   // Register global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
   

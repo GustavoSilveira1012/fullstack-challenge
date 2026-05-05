@@ -5,7 +5,7 @@ services:
   postgres:
     image: postgres:18.3-alpine
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
@@ -52,6 +52,8 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: "false"
     volumes:
       - ./docker/keycloak:/opt/keycloak/data/import:ro
     healthcheck:

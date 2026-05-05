@@ -22,7 +22,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "ignoreDeprecations": "6.0",
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],

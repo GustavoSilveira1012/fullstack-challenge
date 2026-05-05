@@ -16,4 +16,4 @@ RUN bun run build
 
 EXPOSE 4002
 
-CMD ["bun", "run", "src/main.ts"]
+CMD ["sh", "-c", "bunx prisma migrate deploy && bun run src/main.ts"]

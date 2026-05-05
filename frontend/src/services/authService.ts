@@ -14,7 +14,7 @@ class AuthService {
 
   constructor() {
     this.keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080';
-    this.clientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'crash-game-frontend';
+    this.clientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'crash-game-client';
     this.realm = import.meta.env.VITE_KEYCLOAK_REALM || 'crash-game';
     this.redirectUri = `${window.location.origin}/auth/callback`;
   }
@@ -197,8 +197,15 @@ class AuthService {
    * 1. Redirect to Keycloak login
    */
   async login(): Promise<void> {
-    const loginUrl = await this.getLoginUrl();
-    window.location.href = loginUrl;
+    try {
+      console.log('Initiating login redirect to Keycloak...');
+      const loginUrl = await this.getLoginUrl();
+      console.log('Login URL generated successfully');
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error('Failed to initiate login:', error);
+      throw error;
+    }
   }
 
   /**
@@ -212,27 +219,58 @@ class AuthService {
     window.location.href = this.getLogoutUrl();
   }
 
+  private isProcessingCallback = false;
+
   /**
    * Handle OAuth2 callback after Keycloak redirects back
    * Requirement 2.1.1: Handle callback and token storage
    */
   async handleCallback(code: string): Promise<void> {
+    if (this.isProcessingCallback) {
+      console.log('Already processing callback, skipping duplicate...');
+      return;
+    }
+
     try {
+      this.isProcessingCallback = true;
+      console.log('Exchanging code for tokens...');
+      
       // Exchange code for tokens
       const tokenResponse = await this.exchangeCodeForToken(code);
+      console.log('Tokens received successfully');
 
-      // Get user info
-      const userInfo = await this.getUserInfo(tokenResponse.access_token);
+      // Manually decode JWT payload (it's the second part of the token)
+      const tokenParts = tokenResponse.access_token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+
+      // Decode base64url payload
+      const payloadBase64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const decodedToken = JSON.parse(window.atob(payloadBase64));
+      
+      const playerId = decodedToken?.sub;
+      const email = decodedToken?.email || 'player@crash-game.dev';
+
+      if (!playerId) {
+        throw new Error('Could not extract player ID from token');
+      }
+
+      console.log('Extracted Player ID:', playerId);
 
       // Store in auth store
       const authStore = useAuthStore.getState();
-      authStore.login(tokenResponse.access_token, userInfo.sub, userInfo.email);
+      authStore.login(tokenResponse.access_token, playerId, email);
 
-      // Store refresh token in secure storage (httpOnly cookie would be better)
-      // For now, store in sessionStorage (cleared when browser closes)
-      sessionStorage.setItem('refresh_token', tokenResponse.refresh_token);
+      // Store refresh token in secure storage
+      if (tokenResponse.refresh_token) {
+        sessionStorage.setItem('refresh_token', tokenResponse.refresh_token);
+      }
     } catch (error) {
+      console.error('Authentication callback failed:', error);
       throw new Error(`Authentication callback failed: ${(error as Error).message}`);
+    } finally {
+      this.isProcessingCallback = false;
     }
   }
 
@@ -251,7 +289,7 @@ class AuthService {
   private generateCodeVerifier(): string {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
-    return btoa(String.fromCharCode.apply(null, array))
+    return btoa(String.fromCharCode.apply(null, Array.from(array)))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');

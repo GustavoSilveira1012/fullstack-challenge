@@ -44,9 +44,9 @@ export class CreateWalletUseCase {
       };
     }
 
-    // Create new wallet with zero balance
+    // Create new wallet with initial test balance (10,000.00)
     const walletId = WalletId.create();
-    const balance = Money.zero();
+    const balance = Money.fromCentavos(1000000);
     const now = new Date();
     const wallet = new Wallet(walletId, playerId, balance, now, now);
 

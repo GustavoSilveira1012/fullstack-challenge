@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { Loading } from '@components/common/Loading';
@@ -18,15 +18,17 @@ export const AuthCallbackPage: React.FC = () => {
   const { handleCallback, isAuthenticated } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
-
   useEffect(() => {
     const processCallback = async () => {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
+      if (status !== 'processing') return;
+
       // Handle OAuth2 errors
       if (error) {
+        console.error('OAuth2 error:', error, errorDescription);
         setStatus('error');
         setErrorMessage(errorDescription || `Authentication error: ${error}`);
         return;
@@ -40,22 +42,26 @@ export const AuthCallbackPage: React.FC = () => {
       }
 
       try {
+        console.log('Processing auth code...');
         // Process the authorization code
         await handleCallback(code);
+        console.log('Auth successful, preparing redirect...');
         setStatus('success');
         
         // Redirect to dashboard after a short delay
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           navigate('/dashboard', { replace: true });
-        }, 2000);
+        }, 1500);
+        return () => clearTimeout(timer);
       } catch (err) {
+        console.error('Auth callback failed:', err);
         setStatus('error');
         setErrorMessage(err instanceof Error ? err.message : 'Authentication failed');
       }
     };
 
     processCallback();
-  }, [searchParams, handleCallback, navigate]);
+  }, [searchParams, handleCallback, navigate, status]);
 
   // Redirect if already authenticated (shouldn't happen, but safety check)
   useEffect(() => {

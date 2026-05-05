@@ -11,21 +11,23 @@ import {
  * Requirement 2.5: Create WalletService class
  */
 class WalletService {
+  private walletBaseUrl: string;
+
   constructor() {
     // Use separate wallet API URL if configured, otherwise use default API URL
-    // Note: Currently using the same API client, but this allows for future separation
-    void (import.meta.env.VITE_WALLET_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3001');
+    this.walletBaseUrl = import.meta.env.VITE_WALLET_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3001';
   }
 
   /**
    * Create a new wallet for a player
    * POST /wallets
-   * Requirement 2.1.2: Create wallet
    */
   async createWallet(playerId: string): Promise<CreateWalletResponse> {
     try {
       const request: CreateWalletRequest = { playerId };
-      const response = await apiClient.post<CreateWalletResponse>('/wallets', request);
+      const response = await apiClient.post<CreateWalletResponse>('/wallets', request, {
+        baseURL: this.walletBaseUrl,
+      });
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to create wallet');
@@ -35,13 +37,33 @@ class WalletService {
   /**
    * Get current player's wallet balance
    * GET /wallets/me
-   * Requirement 2.1.2: Get wallet balance
    */
   async getBalance(): Promise<GetWalletResponse> {
     try {
-      const response = await apiClient.get<GetWalletResponse>('/wallets/me');
+      const response = await apiClient.get<GetWalletResponse>('/wallets/me', {
+        baseURL: this.walletBaseUrl,
+      });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // If wallet not found (404), attempt to create it automatically
+      if (error.status === 404) {
+        console.log('Wallet not found, creating new wallet for player...');
+        try {
+          // We don't strictly need playerId here as the backend extracts it from the JWT
+          const newWallet = await this.createWallet('');
+          return {
+            id: newWallet.id,
+            playerId: newWallet.playerId,
+            balance: newWallet.balance,
+            currency: newWallet.currency,
+            createdAt: newWallet.createdAt,
+            updatedAt: newWallet.updatedAt
+          };
+        } catch (createError) {
+          console.error('Failed to auto-create wallet:', createError);
+          throw this.handleError(createError, 'Failed to create wallet after 404');
+        }
+      }
       throw this.handleError(error, 'Failed to fetch wallet balance');
     }
   }
@@ -65,7 +87,9 @@ class WalletService {
    */
   async healthCheck(): Promise<HealthCheckResponse> {
     try {
-      const response = await apiClient.get<HealthCheckResponse>('/health');
+      const response = await apiClient.get<HealthCheckResponse>('/health', {
+        baseURL: this.walletBaseUrl,
+      });
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Wallet service health check failed');

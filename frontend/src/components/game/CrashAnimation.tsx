@@ -37,7 +37,7 @@ export const CrashAnimation: React.FC<CrashAnimationProps> = ({
    * Trigger crash animation when round crashes
    */
   useEffect(() => {
-    if (roundState === 'CRASHED' && !isAnimating) {
+    if (roundState === 'CRASHED') {
       setIsAnimating(true);
       setShowParticles(true);
       
@@ -52,11 +52,14 @@ export const CrashAnimation: React.FC<CrashAnimationProps> = ({
       }, duration);
 
       return () => clearTimeout(timer);
+    } else {
+      setIsAnimating(false);
+      setShowParticles(false);
     }
-  }, [roundState, isAnimating, duration, playSound, onAnimationComplete]);
+  }, [roundState, duration, playSound, onAnimationComplete]);
 
-  // Don't render if not crashed or not animating
-  if (roundState !== 'CRASHED' && !isAnimating) {
+  // Don't render if not animating
+  if (!isAnimating) {
     return null;
   }
 
@@ -79,7 +82,7 @@ export const CrashAnimation: React.FC<CrashAnimationProps> = ({
         <div
           className={`
             text-6xl md:text-8xl font-bold text-red-600 
-            ${isAnimating ? 'animate-shake animate-crash-pulse' : 'opacity-0'}
+            ${isAnimating ? 'animate-shake animate-crashPulse' : 'opacity-0'}
           `}
         >
           CRASHED!

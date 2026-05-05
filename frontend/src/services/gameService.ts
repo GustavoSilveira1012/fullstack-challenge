@@ -49,11 +49,20 @@ class GameService {
    * GET /games/rounds/current
    * Requirement 2.2.1: Get current round
    */
-  async getCurrentRound(): Promise<CurrentRoundResponse> {
+  async getCurrentRound(retryCount = 0): Promise<CurrentRoundResponse> {
     try {
-      const response = await apiClient.get<CurrentRoundResponse>('/games/rounds/current');
+      const response = await apiClient.get<CurrentRoundResponse>('/games/rounds/current', {
+        baseURL: this.gamesBaseUrl,
+      });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // If round not found (404) and we haven't retried too many times, try again
+      // This helps when the game engine is just starting up
+      if (error.status === 404 && retryCount < 3) {
+        console.log(`Current round not found, retrying... (attempt ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.getCurrentRound(retryCount + 1);
+      }
       throw this.handleError(error, 'Failed to fetch current round');
     }
   }
