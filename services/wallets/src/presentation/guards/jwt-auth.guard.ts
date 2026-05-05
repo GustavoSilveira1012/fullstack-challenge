@@ -58,6 +58,11 @@ export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
+    // Allow OPTIONS requests without authentication for CORS preflight
+    if (request.method === 'OPTIONS') {
+      return true;
+    }
+
     // Extract token from Authorization header
     const token = this.extractTokenFromHeader(request);
     if (!token) {
@@ -116,6 +121,13 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid token format');
       }
 
+      console.log('[JwtAuthGuard] Decoded token payload:', {
+        sub: payload.sub,
+        iss: payload.iss,
+        exp: payload.exp,
+        iat: payload.iat
+      });
+
       return payload;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
@@ -142,6 +154,8 @@ export class JwtAuthGuard implements CanActivate {
   private extractPlayerId(payload: JwtPayload): PlayerId {
     const sub = payload.sub;
 
+    console.log('[JwtAuthGuard] Extracting playerId from token sub:', sub);
+
     if (!sub) {
       throw new UnauthorizedException('Token missing sub claim (player ID)');
     }
@@ -149,11 +163,13 @@ export class JwtAuthGuard implements CanActivate {
     const playerIdResult = PlayerId.fromString(sub);
 
     if (!playerIdResult.ok) {
+      console.error('[JwtAuthGuard] Invalid playerId:', playerIdResult.error.message);
       throw new UnauthorizedException(
         `Invalid player ID in token: ${playerIdResult.error.message}`
       );
     }
 
+    console.log('[JwtAuthGuard] Successfully extracted playerId:', playerIdResult.value.toString());
     return playerIdResult.value;
   }
 }

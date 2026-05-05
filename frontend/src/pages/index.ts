@@ -10,3 +10,6 @@ export { GamePage } from './GamePage';
 export { ProfilePage } from './ProfilePage';
 export { HistoryPage } from './HistoryPage';
 export { VerifyPage } from './VerifyPage';
+export { BetHistoryPage } from './BetHistoryPage';
+export { VerifyFairnessPage } from './VerifyFairnessPage';
+export { SettingsPage } from './SettingsPage';

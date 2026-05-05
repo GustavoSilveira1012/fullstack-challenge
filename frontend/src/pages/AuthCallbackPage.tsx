@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
+import { useAuthStore } from '@store/authStore';
 import { Loading } from '@components/common/Loading';
 import { Card } from '@components/common/Card';
 import { Button } from '@components/common/Button';
@@ -18,13 +19,23 @@ export const AuthCallbackPage: React.FC = () => {
   const { handleCallback, isAuthenticated } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [hasProcessed, setHasProcessed] = useState(false);
   useEffect(() => {
     const processCallback = async () => {
+      // Prevent duplicate processing
+      if (hasProcessed || status !== 'processing') {
+        console.log('Callback already processed, skipping...');
+        return;
+      }
+
       const code = searchParams.get('code');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
-      if (status !== 'processing') return;
+      console.log('Processing callback with:', { code: code?.substring(0, 10) + '...', error });
+
+      // Mark as processed immediately to prevent duplicates
+      setHasProcessed(true);
 
       // Handle OAuth2 errors
       if (error) {
@@ -48,11 +59,30 @@ export const AuthCallbackPage: React.FC = () => {
         console.log('Auth successful, preparing redirect...');
         setStatus('success');
         
-        // Redirect to dashboard after a short delay
-        const timer = setTimeout(() => {
+        // Wait longer and verify auth state before redirecting
+        setTimeout(() => {
+          // Check both the hook state and localStorage directly
+          const hookState = useAuthStore.getState();
+          const isAuthenticatedInStorage = localStorage.getItem('isAuthenticated') === 'true';
+          const hasTokenInStorage = !!localStorage.getItem('token');
+          
+          console.log('Pre-redirect auth check:', {
+            hookAuthenticated: hookState.isAuthenticated,
+            storageAuthenticated: isAuthenticatedInStorage,
+            hasToken: hasTokenInStorage,
+            playerId: hookState.playerId || localStorage.getItem('playerId')
+          });
+          
+          // If localStorage has auth but hook doesn't, force a reload to reinitialize
+          if (isAuthenticatedInStorage && hasTokenInStorage && !hookState.isAuthenticated) {
+            console.log('Auth state mismatch detected, reloading to reinitialize...');
+            window.location.href = '/dashboard';
+            return;
+          }
+          
+          console.log('Redirecting to dashboard...');
           navigate('/dashboard', { replace: true });
-        }, 1500);
-        return () => clearTimeout(timer);
+        }, 2000); // Reduced to 2 seconds
       } catch (err) {
         console.error('Auth callback failed:', err);
         setStatus('error');
@@ -61,7 +91,7 @@ export const AuthCallbackPage: React.FC = () => {
     };
 
     processCallback();
-  }, [searchParams, handleCallback, navigate, status]);
+  }, [searchParams, handleCallback, navigate, hasProcessed, status]);
 
   // Redirect if already authenticated (shouldn't happen, but safety check)
   useEffect(() => {

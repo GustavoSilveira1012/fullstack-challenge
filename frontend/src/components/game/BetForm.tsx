@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { LoadingButton } from '@components/common/Loading';
 import { Input } from '@components/common/Input';
 import { useGameStore } from '@store/gameStore';
-import { useWalletStore } from '@store/walletStore';
+import { useWallet } from '@hooks/useWallet';
 import { gameService } from '@services/gameService';
 import { useNotification } from '@hooks/useNotification';
 import { useAsyncCallback } from '@hooks/useAsyncState';
@@ -28,7 +28,7 @@ interface BetFormProps {
 
 export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced }) => {
   const { roundState, playerBet } = useGameStore();
-  const { balance, lastBetAmount, setLastBetAmount } = useWalletStore();
+  const { balance, formatBalance, deductBetAmount, getMaxBetAmount, validateBetAmount, calculateQuickBet } = useWallet();
   const { showSuccess, showError } = useNotification();
   const { withRetry, executeWhenOnline } = useErrorRecovery();
   const { playSound, initializeAudio } = useSound();
@@ -43,7 +43,7 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
    * Async callback for placing bet with error recovery and rate limiting
    * Requirement 3.2.4: Rate limiting on client side
    */
-  const { execute: placeBet, loading: isPlacingBet } = useAsyncCallback(
+  const { execute: placeBet, loading: isPlacingBet, error: placeBetError } = useAsyncCallback(
     async (amount: number) => {
       // Check rate limit before making request
       if (!rateLimiter.isAllowed('bet-placement')) {
@@ -70,27 +70,28 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
    * Convert centavos to reais for display
    */
   const formatCurrency = useCallback((centavos: number): string => {
-    const reais = (centavos / 100).toFixed(2);
-    const formatted = parseFloat(reais).toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-    return `R$ ${formatted}`;
-  }, []);
+    return formatBalance(centavos);
+  }, [formatBalance]);
 
   /**
    * Convert reais string to centavos with sanitization
    * Requirement 3.2.2: Input validation and sanitization
    */
+  /**
+   * Converts reais (user input) to centavos (API format) by multiplying by 100
+   */
   const parseCurrency = useCallback((value: string): number => {
-    const sanitized = sanitizeNumericInput(value, {
+    // Convert comma to period for decimal separator (Brazilian format)
+    const normalizedValue = value.replace(',', '.');
+    
+    const sanitized = sanitizeNumericInput(normalizedValue, {
       min: 0,
-      max: 100000,
+      max: Infinity, // Don't limit here, validation will check centavos limits
       allowDecimals: true,
       allowNegative: false,
     });
     
-    return sanitized || 0;
+    return sanitized ? sanitized * 100 : 0;
   }, []);
 
   /**
@@ -102,31 +103,24 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
       return { isValid: false, error: '' };
     }
 
-    // Use security validation utility
-    const result = validateInput.betAmount(betAmount);
+    // Convert reais input to centavos first
+    const centavos = parseCurrency(betAmount);
     
-    if (!result.isValid) {
-      return { isValid: false, error: result.error || 'Invalid amount' };
-    }
-
-    const amount = result.sanitized!;
-
-    if (amount > balance) {
-      return { 
-        isValid: false, 
-        error: `Insufficient balance. You have ${formatCurrency(balance)}, but need ${formatCurrency(amount)}` 
-      };
-    }
-
-    return { isValid: true, error: '' };
-  }, [betAmount, balance, formatCurrency]);
+    // Use the wallet's validation function
+    const result = validateBetAmount(centavos);
+    
+    return { 
+      isValid: result.valid, 
+      error: result.error || '' 
+    };
+  }, [betAmount, validateBetAmount, parseCurrency]);
 
   /**
    * Check if betting is allowed
    */
   const canPlaceBet = useMemo(() => {
-    return roundState === 'BETTING' && !playerBet && validation.isValid && !isPlacingBet;
-  }, [roundState, playerBet, validation.isValid, isPlacingBet]);
+    return roundState === 'BETTING' && !playerBet && validation.isValid;
+  }, [roundState, playerBet, validation.isValid]);
 
   /**
    * Handle bet amount input change
@@ -151,34 +145,40 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
    * Quick bet button handlers
    */
   const handleQuickBet = useCallback((multiplier: number) => {
-    if (lastBetAmount > 0) {
-      const newAmount = Math.min(lastBetAmount * multiplier, MAX_BET);
+    const newAmount = calculateQuickBet(multiplier);
+    if (newAmount > 0) {
       setQuickBetAmount(newAmount);
     }
-  }, [lastBetAmount, setQuickBetAmount]);
+  }, [calculateQuickBet, setQuickBetAmount]);
 
   const handleMaxBet = useCallback(() => {
-    const maxAmount = Math.min(balance, MAX_BET);
+    const maxAmount = getMaxBetAmount();
     setQuickBetAmount(maxAmount);
-  }, [balance, setQuickBetAmount]);
+  }, [getMaxBetAmount, setQuickBetAmount]);
 
   /**
-   * Place bet with enhanced error handling
+   * Simple bet placement function for debugging
    */
-  const handlePlaceBet = useCallback(async () => {
+  const handlePlaceBetDirect = useCallback(async () => {
     if (!canPlaceBet) return;
 
     const amount = parseCurrency(betAmount);
+    console.log('[BetForm] Direct bet placement - amount:', amount);
 
     try {
       // Initialize audio on first user interaction
       await initializeAudio();
       
-      const response = await placeBet(amount);
+      console.log('[BetForm] About to call gameService.placeBet directly');
+      
+      // Call gameService directly without useAsyncCallback wrapper
+      const response = await gameService.placeBet(amount);
+      
+      console.log('[BetForm] Direct API response:', response);
       
       if (response) {
-        // Update last bet amount
-        setLastBetAmount(amount);
+        // Deduct bet amount from wallet balance
+        deductBetAmount(amount);
         
         // Clear form
         setBetAmount('');
@@ -192,21 +192,22 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
         // Call callback
         onBetPlaced?.(amount);
       } else {
-        throw new Error('Failed to place bet');
+        throw new Error('No response from API');
       }
     } catch (error: any) {
-      // Error is already handled by useAsyncCallback and useErrorRecovery
-      console.error('Bet placement failed:', error);
+      console.error('[BetForm] Direct bet placement error:', error);
+      const errorMessage = error?.message || error?.data?.message || 'Failed to place bet';
+      showError(errorMessage);
     }
-  }, [canPlaceBet, betAmount, parseCurrency, placeBet, setLastBetAmount, formatCurrency, showSuccess, onBetPlaced, playSound, initializeAudio]);
+  }, [canPlaceBet, betAmount, parseCurrency, deductBetAmount, formatCurrency, showSuccess, showError, onBetPlaced, playSound, initializeAudio]);
 
   /**
    * Handle form submission
    */
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    handlePlaceBet();
-  }, [handlePlaceBet]);
+    handlePlaceBetDirect();
+  }, [handlePlaceBetDirect]);
 
   /**
    * Get disabled state message
@@ -278,9 +279,9 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
               type="button"
               variant="secondary"
               size="small"
-              disabled={!lastBetAmount || roundState !== 'BETTING' || !!playerBet}
+              disabled={calculateQuickBet(1) === 0 || roundState !== 'BETTING' || !!playerBet}
               onClick={() => handleQuickBet(1)}
-              aria-label={`Repeat last bet: ${formatCurrency(lastBetAmount)}`}
+              aria-label={`Repeat last bet: ${formatCurrency(calculateQuickBet(1))}`}
             >
               1x
             </LoadingButton>
@@ -288,9 +289,9 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
               type="button"
               variant="secondary"
               size="small"
-              disabled={!lastBetAmount || roundState !== 'BETTING' || !!playerBet}
+              disabled={calculateQuickBet(2) === 0 || roundState !== 'BETTING' || !!playerBet}
               onClick={() => handleQuickBet(2)}
-              aria-label={`Double last bet: ${formatCurrency(lastBetAmount * 2)}`}
+              aria-label={`Double last bet: ${formatCurrency(calculateQuickBet(2))}`}
             >
               2x
             </LoadingButton>
@@ -298,9 +299,9 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
               type="button"
               variant="secondary"
               size="small"
-              disabled={!lastBetAmount || roundState !== 'BETTING' || !!playerBet}
+              disabled={calculateQuickBet(5) === 0 || roundState !== 'BETTING' || !!playerBet}
               onClick={() => handleQuickBet(5)}
-              aria-label={`Five times last bet: ${formatCurrency(lastBetAmount * 5)}`}
+              aria-label={`Five times last bet: ${formatCurrency(calculateQuickBet(5))}`}
             >
               5x
             </LoadingButton>
@@ -310,7 +311,7 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
               size="small"
               disabled={balance === 0 || roundState !== 'BETTING' || !!playerBet}
               onClick={handleMaxBet}
-              aria-label={`Maximum bet: ${formatCurrency(Math.min(balance, MAX_BET))}`}
+              aria-label={`Maximum bet: ${formatCurrency(getMaxBetAmount())}`}
             >
               Max
             </LoadingButton>
@@ -323,7 +324,7 @@ export const BetForm: React.FC<BetFormProps> = ({ className = '', onBetPlaced })
           variant="primary"
           size="large"
           disabled={!canPlaceBet}
-          loading={isPlacingBet}
+          loading={false}
           loadingText="Placing Bet..."
           className="w-full"
           aria-label={canPlaceBet ? `Place bet of ${betAmount || '0,00'}` : getDisabledMessage()}

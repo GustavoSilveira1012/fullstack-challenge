@@ -27,6 +27,8 @@ export class CreateRoundUseCase {
     // Create new round using provably fair service
     const round = Round.create(this.provablyFairService);
 
+    console.log(`Created new round ${round.getId().toString()} with crash point: ${round.getCrashPoint().toNumber()}x`);
+
     // Save round to repository
     await this.roundRepository.save(round);
 

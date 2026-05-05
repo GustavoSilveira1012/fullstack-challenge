@@ -6,3 +6,7 @@ export { BetForm } from './BetForm';
 export { CashOutButton } from './CashOutButton';
 export { BetStatus } from './BetStatus';
 export { CrashAnimation } from './CrashAnimation';
+export { RocketAnimation } from './RocketAnimation';
+export { CurrentRoundBets } from './CurrentRoundBets';
+export { GameInterface } from './GameInterface';
+export { GameSimulator } from './GameSimulator';

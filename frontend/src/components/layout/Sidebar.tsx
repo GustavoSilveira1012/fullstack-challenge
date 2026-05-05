@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '@hooks/useGame';
 import { Card } from '@components/common/Card';
 
@@ -20,6 +21,7 @@ interface SidebarProps {
  * - WCAG AA accessibility compliance
  */
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { fetchRoundHistory } = useGame();
   const [recentRounds, setRecentRounds] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -213,23 +215,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
             <button
               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onClick={onClose}
+              onClick={() => {
+                navigate('/dashboard');
+                onClose();
+              }}
             >
               Dashboard
             </button>
 
             <button
               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onClick={onClose}
+              onClick={() => {
+                navigate('/history');
+                onClose();
+              }}
             >
               Bet History
             </button>
 
             <button
               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onClick={onClose}
+              onClick={() => {
+                navigate('/verify');
+                onClose();
+              }}
             >
               Verify Fairness
+            </button>
+
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onClick={() => {
+                navigate('/profile');
+                onClose();
+              }}
+            >
+              Profile
+            </button>
+
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onClick={() => {
+                navigate('/settings');
+                onClose();
+              }}
+            >
+              Settings
             </button>
           </div>
         </div>

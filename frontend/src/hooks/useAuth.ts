@@ -12,28 +12,71 @@ export const useAuth = () => {
   const { addNotification } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   /**
    * Initialize auth state from localStorage on mount
    */
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedPlayerId = localStorage.getItem('playerId');
-    const storedEmail = localStorage.getItem('email');
-    const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
+    if (isInitialized) return; // Prevent multiple initializations
 
-    if (storedToken && storedPlayerId && storedEmail && storedIsAuthenticated === 'true') {
-      // Check if token is expired
-      if (!authService.isTokenExpired(storedToken)) {
-        // Restore auth state
-        const authStore = useAuthStore.getState();
-        authStore.login(storedToken, storedPlayerId, storedEmail);
-      } else {
-        // Token expired, clear auth state
-        logout();
+    const initializeAuth = () => {
+      console.log('Starting auth initialization...');
+      
+      // Check if we're currently processing a callback
+      const isProcessingCallback = sessionStorage.getItem('processing_callback') === 'true';
+      if (isProcessingCallback) {
+        console.log('Callback processing in progress, skipping auth initialization');
+        // Wait a bit and try again
+        setTimeout(() => {
+          if (!isInitialized) {
+            initializeAuth();
+          }
+        }, 500);
+        return;
       }
-    }
-  }, [logout]);
+      
+      const storedToken = localStorage.getItem('token');
+      const storedPlayerId = localStorage.getItem('playerId');
+      const storedEmail = localStorage.getItem('email');
+      const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
+
+      console.log('Initializing auth state:', {
+        hasToken: !!storedToken,
+        hasPlayerId: !!storedPlayerId,
+        hasEmail: !!storedEmail,
+        isAuthenticated: storedIsAuthenticated
+      });
+
+      // If we have all required auth data
+      if (storedToken && storedPlayerId && storedEmail && storedIsAuthenticated === 'true') {
+        try {
+          // For real tokens, check expiration
+          if (!authService.isTokenExpired(storedToken)) {
+            console.log('Restoring auth state from localStorage (valid token)');
+            const authStore = useAuthStore.getState();
+            authStore.login(storedToken, storedPlayerId, storedEmail);
+            setIsInitialized(true);
+            return;
+          } else {
+            console.log('Token expired, clearing auth state');
+          }
+        } catch (error) {
+          console.error('Error checking token expiration:', error);
+          console.log('Error checking token, clearing auth state');
+        }
+      } else {
+        console.log('Missing auth data in localStorage');
+      }
+      
+      // Token expired, invalid, or missing - clear auth state
+      console.log('Clearing auth state');
+      logout();
+      setIsInitialized(true);
+    };
+
+    initializeAuth();
+  }, [logout, isInitialized]);
 
   /**
    * Handle OAuth2 callback after Keycloak redirects back
@@ -44,7 +87,18 @@ export const useAuth = () => {
       setError(null);
 
       try {
+        console.log('useAuth.handleCallback: Starting callback processing');
         await authService.handleCallback(code);
+        
+        // Force a re-check of auth state after successful callback
+        console.log('useAuth.handleCallback: Callback successful, checking auth state');
+        const authState = useAuthStore.getState();
+        console.log('useAuth.handleCallback: Current auth state:', {
+          isAuthenticated: authState.isAuthenticated,
+          hasToken: !!authState.token,
+          playerId: authState.playerId
+        });
+        
         addNotification({
           type: 'success',
           message: 'Successfully logged in',
@@ -68,9 +122,11 @@ export const useAuth = () => {
    */
   const performLogin = useCallback(async () => {
     try {
+      console.log('useAuth.performLogin: Starting login process');
       setIsLoading(true);
       await authService.login();
     } catch (err) {
+      console.error('useAuth.performLogin: Login failed:', err);
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
       addNotification({
@@ -87,7 +143,25 @@ export const useAuth = () => {
    */
   const performLogout = useCallback(() => {
     try {
-      authService.logout();
+      console.log('useAuth.performLogout: Starting logout process');
+      
+      // Clear auth store
+      logout();
+      
+      // Clear all storage to ensure clean state
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      console.log('All storage cleared');
+      
+      // Always use Keycloak logout for real sessions
+      try {
+        authService.logout();
+      } catch (error) {
+        console.warn('Keycloak logout failed, redirecting to login anyway');
+        window.location.href = '/login';
+      }
+      
       addNotification({
         type: 'success',
         message: 'Successfully logged out',
@@ -99,8 +173,13 @@ export const useAuth = () => {
         type: 'error',
         message: errorMessage,
       });
+      
+      // Force redirect to login even if logout failed
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
     }
-  }, [addNotification]);
+  }, [logout, addNotification]);
 
   /**
    * Refresh access token if expired
@@ -132,7 +211,7 @@ export const useAuth = () => {
     playerId,
     email,
     token,
-    isLoading,
+    isLoading: isLoading || !isInitialized,
     error,
 
     // Actions

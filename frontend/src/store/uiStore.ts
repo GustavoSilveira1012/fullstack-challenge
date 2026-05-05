@@ -11,11 +11,13 @@ interface UIState {
   // State
   theme: 'light' | 'dark';
   soundEnabled: boolean;
+  animationSpeed: 'slow' | 'normal' | 'fast';
   notifications: Notification[];
 
   // Actions
   setTheme: (theme: 'light' | 'dark') => void;
   toggleSound: () => void;
+  setAnimationSpeed: (speed: 'slow' | 'normal' | 'fast') => void;
   addNotification: (notification: Omit<Notification, 'id'>) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
@@ -54,12 +56,28 @@ export const useUIStore = create<UIState>((set) => {
     }
   };
 
+  // Initialize animation speed from localStorage
+  const getInitialAnimationSpeed = (): 'slow' | 'normal' | 'fast' => {
+    try {
+      const savedSpeed = localStorage.getItem('animationSpeed');
+      if (savedSpeed === 'slow' || savedSpeed === 'normal' || savedSpeed === 'fast') {
+        return savedSpeed;
+      }
+      return 'normal';
+    } catch (error) {
+      console.warn('Failed to read animation speed from localStorage:', error);
+      return 'normal';
+    }
+  };
+
   const initialTheme = getInitialTheme();
   const initialSoundEnabled = getInitialSoundEnabled();
+  const initialAnimationSpeed = getInitialAnimationSpeed();
 
   return {
     theme: initialTheme,
     soundEnabled: initialSoundEnabled,
+    animationSpeed: initialAnimationSpeed,
     notifications: [],
 
     setTheme: (theme) => {
@@ -88,6 +106,15 @@ export const useUIStore = create<UIState>((set) => {
         }
         return { soundEnabled: newValue };
       });
+    },
+
+    setAnimationSpeed: (speed) => {
+      set({ animationSpeed: speed });
+      try {
+        localStorage.setItem('animationSpeed', speed);
+      } catch (error) {
+        console.warn('Failed to save animation speed to localStorage:', error);
+      }
     },
 
     addNotification: (notification) => {

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Options,
   Body,
   Param,
   Query,
@@ -13,7 +14,11 @@ import {
   NotFoundException,
   UnprocessableEntityException,
   Logger,
+  Res,
+  Req,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { Response, Request as ExpressRequest } from 'express';
 import { HealthCheckResponseDto } from '../dtos/health-check-response.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PlaceBetDto } from '../dtos/place-bet.dto';
@@ -39,7 +44,8 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
  * Games Controller
  * Handles all game-related HTTP endpoints
  */
-@Controller('games')
+@ApiTags('games')
+@Controller()
 export class GamesController {
   private readonly logger = new Logger(GamesController.name);
 
@@ -67,6 +73,44 @@ export class GamesController {
       this.logger.error('Health check failed', error);
       return { status: 'error', service: 'games' } as any;
     }
+  }
+
+  /**
+   * OPTIONS /games/rounds/current
+   * Handles CORS preflight requests for the current round endpoint
+   */
+  @Options('rounds/current')
+  @HttpCode(HttpStatus.OK)
+  handleOptionsRoundsCurrent(@Req() req: ExpressRequest, @Res() res: Response): void {
+    const origin = req.headers.origin;
+    
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With,X-CSRF-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'Authorization');
+    
+    console.log(`[CORS] Handled OPTIONS request for /games/rounds/current from origin ${origin}`);
+    res.status(200).end();
+  }
+
+  /**
+   * OPTIONS /games/bet
+   * Handles CORS preflight requests for the bet endpoint
+   */
+  @Options('bet')
+  @HttpCode(HttpStatus.OK)
+  handleOptionsBet(@Req() req: ExpressRequest, @Res() res: Response): void {
+    const origin = req.headers.origin;
+    
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With,X-CSRF-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'Authorization');
+    
+    console.log(`[CORS] Handled OPTIONS request for /games/bet from origin ${origin}`);
+    res.status(200).end();
   }
 
   /**

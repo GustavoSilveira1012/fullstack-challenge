@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "bun run --watch src/main.ts",
-    "start": "bun run src/main.ts",
-    "build": "prisma generate",
+    "start": "node dist/main.js",
+    "build": "tsc && prisma generate",
     "test": "bun test tests/unit",
     "test:e2e": "bun test tests/e2e"
   },
@@ -13,6 +13,7 @@
     "@nestjs/common": "^11.1.17",
     "@nestjs/core": "^11.1.17",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/swagger": "^8.0.7",
     "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "amqplib": "^1.0.3",
@@ -31,6 +32,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "bun-types": "latest",
     "dotenv": "^17.4.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
 }

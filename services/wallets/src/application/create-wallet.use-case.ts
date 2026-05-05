@@ -35,9 +35,12 @@ export class CreateWalletUseCase {
   async execute(
     playerId: PlayerId
   ): Promise<Result<WalletResponseDto, WalletAlreadyExistsError>> {
+    console.log('[CreateWalletUseCase] Creating wallet for playerId:', playerId.toString());
+
     // Check if wallet already exists
     const exists = await this.walletRepository.existsByPlayerId(playerId);
     if (exists) {
+      console.log('[CreateWalletUseCase] Wallet already exists for playerId:', playerId.toString());
       return {
         ok: false,
         error: new WalletAlreadyExistsError(playerId.toString()),
@@ -46,9 +49,19 @@ export class CreateWalletUseCase {
 
     // Create new wallet with initial test balance (10,000.00)
     const walletId = WalletId.create();
-    const balance = Money.fromCentavos(1000000);
+    const balanceResult = Money.fromCentavos(1000000n);
+    if (!balanceResult.ok) {
+      throw new Error('Failed to create initial balance');
+    }
+    const balance = balanceResult.value;
     const now = new Date();
     const wallet = new Wallet(walletId, playerId, balance, now, now);
+
+    console.log('[CreateWalletUseCase] Created wallet:', {
+      walletId: walletId.toString(),
+      playerId: playerId.toString(),
+      balance: balance.toCentavos().toString()
+    });
 
     // Save wallet to repository
     await this.walletRepository.save(wallet);
@@ -56,6 +69,8 @@ export class CreateWalletUseCase {
     // Publish WalletCreated event
     const event = new WalletCreated(walletId, playerId);
     await this.eventPublisher.publish(event);
+
+    console.log('[CreateWalletUseCase] Wallet saved and event published');
 
     // Return WalletResponseDto
     return {

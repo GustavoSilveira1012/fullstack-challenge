@@ -39,15 +39,25 @@ export class GetWalletUseCase {
     }
 
     // Map wallet entity to WalletResponseDto
+    const responseDto = new WalletResponseDto(
+      wallet.getId().toString(),
+      wallet.getPlayerId().toString(),
+      wallet.getBalance().toCentavos().toString(),
+      wallet.getCreatedAt().toISOString(),
+      wallet.getUpdatedAt().toISOString()
+    );
+
+    console.log('[GetWalletUseCase] Returning wallet response:', {
+      id: responseDto.id,
+      playerId: responseDto.playerId,
+      balance: responseDto.balance,
+      balanceInCentavos: wallet.getBalance().toCentavos().toString(),
+      balanceAsNumber: Number(wallet.getBalance().toCentavos())
+    });
+
     return {
       ok: true,
-      value: new WalletResponseDto(
-        wallet.getId().toString(),
-        wallet.getPlayerId().toString(),
-        wallet.getBalance().toCentavos().toString(),
-        wallet.getCreatedAt().toISOString(),
-        wallet.getUpdatedAt().toISOString()
-      ),
+      value: responseDto,
     };
   }
 }

@@ -52,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header 
-      className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm"
+      className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm relative z-50"
       role="banner"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Dropdown Menu */}
               {isMenuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-40"
+                  className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-[100]"
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu-button"

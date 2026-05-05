@@ -20,6 +20,33 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading, error, performLogin, handleCallback } = useAuth();
   const [isProcessingCallback, setIsProcessingCallback] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>({});
+
+  // Debug: Show current auth state
+  useEffect(() => {
+    const updateDebugInfo = () => {
+      const authState = {
+        isAuthenticated,
+        isLoading,
+        error,
+        localStorage: {
+          token: !!localStorage.getItem('token'),
+          playerId: localStorage.getItem('playerId'),
+          email: localStorage.getItem('email'),
+          isAuthenticated: localStorage.getItem('isAuthenticated')
+        },
+        searchParams: {
+          code: searchParams.get('code')?.substring(0, 10) + '...',
+          error: searchParams.get('error')
+        }
+      };
+      setDebugInfo(authState);
+    };
+
+    updateDebugInfo();
+    const interval = setInterval(updateDebugInfo, 1000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, isLoading, error, searchParams]);
 
   // Handle OAuth2 callback
   useEffect(() => {
@@ -42,11 +69,13 @@ export const LoginPage: React.FC = () => {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('User is authenticated, redirecting to dashboard');
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
   const handleLoginClick = () => {
+    console.log('Login button clicked');
     performLogin();
   };
 
@@ -145,6 +174,41 @@ export const LoginPage: React.FC = () => {
                 By signing in, you agree to our Terms of Service and Privacy Policy.
                 Must be 18+ to play.
               </p>
+              
+              {/* Debug Info */}
+              {import.meta.env.DEV && (
+                <details className="mt-4">
+                  <summary className="text-xs text-gray-400 cursor-pointer">Debug Info</summary>
+                  <pre className="text-xs text-gray-400 mt-2 overflow-auto max-h-32">
+                    {JSON.stringify(debugInfo, null, 2)}
+                  </pre>
+                  <div className="mt-2 space-y-1">
+                    <button 
+                      onClick={() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.reload();
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 block"
+                    >
+                      🗑️ Clear All Storage & Reload
+                    </button>
+                    <button 
+                      onClick={() => {
+                        console.log('Current localStorage:', {
+                          token: localStorage.getItem('token'),
+                          playerId: localStorage.getItem('playerId'),
+                          email: localStorage.getItem('email'),
+                          isAuthenticated: localStorage.getItem('isAuthenticated')
+                        });
+                      }}
+                      className="text-xs text-blue-400 hover:text-blue-300 block"
+                    >
+                      🔍 Log Current Storage
+                    </button>
+                  </div>
+                </details>
+              )}
             </footer>
           </div>
         </Card>

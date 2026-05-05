@@ -1,311 +1,204 @@
-import { useGameStore } from '../store/gameStore';
-import { useWalletStore } from '../store/walletStore';
-import { useUIStore } from '../store/uiStore';
-import { rateLimiter, sanitizeText } from '../utils/security';
-import {
-  MultiplierUpdateMessage,
-  RoundStateChangeMessage,
-  BetConfirmedMessage,
-  BetCashedOutMessage,
-  WebSocketMessage,
-} from '../types/api';
-
 /**
- * WebSocketService: Manages real-time WebSocket connection to game server
- * Requirement 2.5.1: Establish WebSocket connection with automatic reconnection
- * Requirement 2.5.2: Handle multiplier updates
- * Requirement 2.5.3: Handle round state changes
- * Requirement 2.5.4: Handle wallet balance updates
- * Requirement 3.2.3: Secure WebSocket connection (WSS)
- * Requirement 3.2.4: Rate limiting for WebSocket messages
+ * WebSocket Service
+ * Handles real-time communication with the game server
  */
+
+export interface WebSocketMessage {
+  type: string;
+  [key: string]: any;
+}
+
+export interface MultiplierUpdateMessage extends WebSocketMessage {
+  type: 'MULTIPLIER_UPDATE';
+  multiplier: number;
+  timestamp: number;
+}
+
+export interface RoundStateChangeMessage extends WebSocketMessage {
+  type: 'ROUND_STATE_CHANGE';
+  state: 'BETTING' | 'RUNNING' | 'CRASHED';
+  roundId: string;
+}
+
+export interface RoundCrashedMessage extends WebSocketMessage {
+  type: 'ROUND_CRASHED';
+  crashPoint: number;
+  roundId: string;
+}
+
+export interface BetConfirmedMessage extends WebSocketMessage {
+  type: 'BET_CONFIRMED';
+  bet: {
+    id: string;
+    roundId: string;
+    amount: number;
+    state: 'ACTIVE' | 'WON' | 'LOST';
+  };
+}
+
+export interface BetCashedOutMessage extends WebSocketMessage {
+  type: 'BET_CASHED_OUT';
+  multiplier: number;
+  payout: number;
+  betId: string;
+}
+
+type MessageHandler = (message: WebSocketMessage) => void;
+
 class WebSocketService {
   private ws: WebSocket | null = null;
-  private url: string;
-  private token: string;
-  private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 5;
-  private reconnectDelay: number = 1000; // Start with 1 second
-  private reconnectTimer: NodeJS.Timeout | null = null;
-  private messageHandlers: Map<string, (message: any) => void> = new Map();
-  private isIntentionallyClosed: boolean = false;
+  private handlers: Map<string, MessageHandler[]> = new Map();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+  private isConnecting = false;
 
-  constructor(url: string, token: string) {
-    // Ensure secure WebSocket connection in production
-    this.url = this.ensureSecureUrl(url);
-    this.token = sanitizeText(token); // Sanitize token
-    this.setupMessageHandlers();
-  }
-
-  /**
-   * Ensure WebSocket URL uses secure connection (WSS) in production
-   * Requirement 3.2.3: Use HTTPS/WSS for all communication
-   */
-  private ensureSecureUrl(url: string): string {
-    // In production, always use WSS
-    if (import.meta.env.PROD && url.startsWith('ws://')) {
-      return url.replace('ws://', 'wss://');
-    }
-    
-    // In development, allow WS for localhost
-    if (import.meta.env.DEV && (url.includes('localhost') || url.includes('127.0.0.1'))) {
-      return url;
-    }
-    
-    // Default to secure connection
-    if (url.startsWith('ws://')) {
-      return url.replace('ws://', 'wss://');
-    }
-    
-    return url;
-  }
-
-  /**
-   * Setup message handlers for different message types
-   * Requirement 2.5.2, 2.5.3, 2.5.4: Message handlers
-   */
-  private setupMessageHandlers(): void {
-    this.messageHandlers.set('MULTIPLIER_UPDATE', this.handleMultiplierUpdate.bind(this));
-    this.messageHandlers.set('ROUND_STATE_CHANGE', this.handleRoundStateChange.bind(this));
-    this.messageHandlers.set('ROUND_CRASHED', this.handleRoundCrashed.bind(this));
-    this.messageHandlers.set('BET_CONFIRMED', this.handleBetConfirmed.bind(this));
-    this.messageHandlers.set('BET_CASHED_OUT', this.handleBetCashedOut.bind(this));
+  constructor() {
+    this.connect();
   }
 
   /**
    * Connect to WebSocket server
-   * Requirement 2.5.1: Establish WebSocket connection
    */
-  connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.isIntentionallyClosed = false;
-        this.ws = new WebSocket(this.url);
-
-        this.ws.onopen = () => {
-          console.log('[WebSocket] Connected');
-          this.reconnectAttempts = 0;
-          this.sendAuth();
-          resolve();
-        };
-
-        this.ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data) as WebSocketMessage;
-            this.handleMessage(message);
-          } catch (error) {
-            console.error('[WebSocket] Failed to parse message:', error);
-          }
-        };
-
-        this.ws.onerror = (error) => {
-          console.error('[WebSocket] Error:', error);
-          reject(error);
-        };
-
-        this.ws.onclose = () => {
-          console.log('[WebSocket] Disconnected');
-          if (!this.isIntentionallyClosed) {
-            this.attemptReconnect();
-          }
-        };
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  /**
-   * Disconnect from WebSocket server
-   */
-  disconnect(): void {
-    this.isIntentionallyClosed = true;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
+  private connect(): void {
+    if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.CONNECTING)) {
+      return;
     }
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+
+    this.isConnecting = true;
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/games';
+    
+    console.log('[WebSocket] Connecting to:', wsUrl);
+
+    try {
+      this.ws = new WebSocket(wsUrl);
+
+      this.ws.onopen = () => {
+        console.log('[WebSocket] Connected');
+        this.isConnecting = false;
+        this.reconnectAttempts = 0;
+        
+        // Send auth message if needed
+        this.send('AUTH', { timestamp: Date.now() });
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const message: WebSocketMessage = JSON.parse(event.data);
+          console.log('[WebSocket] Received:', message);
+          this.handleMessage(message);
+        } catch (error) {
+          console.error('[WebSocket] Failed to parse message:', error);
+        }
+      };
+
+      this.ws.onclose = (event) => {
+        console.log('[WebSocket] Disconnected:', event.code, event.reason);
+        this.isConnecting = false;
+        this.ws = null;
+        this.scheduleReconnect();
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('[WebSocket] Error:', error);
+        this.isConnecting = false;
+      };
+
+    } catch (error) {
+      console.error('[WebSocket] Connection failed:', error);
+      this.isConnecting = false;
+      this.scheduleReconnect();
     }
   }
 
   /**
-   * Attempt to reconnect with exponential backoff
-   * Requirement 2.5.1: Exponential backoff (1s, 2s, 4s, 8s, max 30s)
+   * Schedule reconnection attempt
    */
-  private attemptReconnect(): void {
+  private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('[WebSocket] Max reconnection attempts reached');
-      const uiStore = useUIStore.getState();
-      uiStore.addNotification({
-        type: 'error',
-        message: 'WebSocket connection failed. Please refresh the page.',
-        duration: 0, // Don't auto-dismiss
-      });
       return;
     }
 
     this.reconnectAttempts++;
-    // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
-    const delay = Math.min(
-      this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
-      30000
-    );
-
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    
     console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
-
-    this.reconnectTimer = setTimeout(() => {
-      this.connect().catch((error) => {
-        console.error('[WebSocket] Reconnection failed:', error);
-      });
+    
+    setTimeout(() => {
+      this.connect();
     }, delay);
   }
 
   /**
-   * Send authentication message
+   * Handle incoming message
    */
-  private sendAuth(): void {
-    this.send({
-      type: 'AUTH',
-      token: this.token,
+  private handleMessage(message: WebSocketMessage): void {
+    const handlers = this.handlers.get(message.type) || [];
+    handlers.forEach(handler => {
+      try {
+        handler(message);
+      } catch (error) {
+        console.error('[WebSocket] Handler error:', error);
+      }
     });
   }
 
   /**
-   * Handle incoming WebSocket message with security validation
-   * Requirement 3.2.2: Validate all incoming data
+   * Send message to server
    */
-  private handleMessage(message: WebSocketMessage): void {
-    try {
-      // Validate message structure
-      if (!message || typeof message !== 'object' || !message.type) {
-        console.warn('[WebSocket] Invalid message format:', message);
-        return;
-      }
-
-      // Sanitize message type
-      const messageType = sanitizeText(message.type);
-      
-      const handler = this.messageHandlers.get(messageType);
-      if (handler) {
-        handler(message);
-      } else {
-        console.warn(`[WebSocket] Unknown message type: ${messageType}`);
-      }
-    } catch (error) {
-      console.error('[WebSocket] Error handling message:', error);
-    }
-  }
-
-  /**
-   * Handle MULTIPLIER_UPDATE message
-   * Requirement 2.5.2: Update multiplier in real-time
-   */
-  private handleMultiplierUpdate(message: MultiplierUpdateMessage): void {
-    const gameStore = useGameStore.getState();
-    gameStore.setMultiplier(message.multiplier);
-  }
-
-  /**
-   * Handle ROUND_STATE_CHANGE message
-   * Requirement 2.5.3: Update round state
-   */
-  private handleRoundStateChange(message: RoundStateChangeMessage): void {
-    const gameStore = useGameStore.getState();
-    gameStore.setRoundState(message.state);
-  }
-
-  /**
-   * Handle ROUND_CRASHED message
-   * Requirement 2.5.3: Handle crash event
-   */
-  private handleRoundCrashed(): void {
-    const gameStore = useGameStore.getState();
-    gameStore.setRoundState('CRASHED');
-    
-    // Play crash sound if enabled
-    const uiStore = useUIStore.getState();
-    if (uiStore.soundEnabled) {
-      this.playSound('crash');
-    }
-  }
-
-  /**
-   * Handle BET_CONFIRMED message
-   * Requirement 2.5.4: Update bet status
-   */
-  private handleBetConfirmed(message: BetConfirmedMessage): void {
-    const gameStore = useGameStore.getState();
-    gameStore.setPlayerBet(message.bet as any);
-
-    // Play bet placed sound if enabled
-    const uiStore = useUIStore.getState();
-    if (uiStore.soundEnabled) {
-      this.playSound('bet-placed');
-    }
-  }
-
-  /**
-   * Handle BET_CASHED_OUT message
-   * Requirement 2.5.4: Update wallet balance
-   */
-  private handleBetCashedOut(message: BetCashedOutMessage): void {
-    const walletStore = useWalletStore.getState();
-    // Update balance with payout
-    walletStore.updateBalance(message.payout);
-
-    // Play cash out sound if enabled
-    const uiStore = useUIStore.getState();
-    if (uiStore.soundEnabled) {
-      this.playSound('cash-out');
-    }
-  }
-
-  /**
-   * Send message to WebSocket server with rate limiting
-   * Requirement 3.2.4: Rate limiting for WebSocket messages
-   */
-  send(message: any): void {
-    // Check rate limit for WebSocket messages
-    if (!rateLimiter.isAllowed('websocket-messages')) {
-      console.warn('[WebSocket] Rate limit exceeded for WebSocket messages');
-      return;
-    }
-
+  private send(type: string, data: any = {}): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      try {
-        this.ws.send(JSON.stringify(message));
-      } catch (error) {
-        console.error('[WebSocket] Error sending message:', error);
-      }
+      const message = JSON.stringify({ type, ...data });
+      this.ws.send(message);
     } else {
-      console.warn('[WebSocket] Cannot send message: WebSocket not connected');
+      console.warn('[WebSocket] Cannot send message, not connected');
     }
   }
 
   /**
-   * Check if WebSocket is connected
+   * Subscribe to message type
+   */
+  on(messageType: string, handler: MessageHandler): () => void {
+    if (!this.handlers.has(messageType)) {
+      this.handlers.set(messageType, []);
+    }
+    
+    this.handlers.get(messageType)!.push(handler);
+
+    // Return unsubscribe function
+    return () => {
+      const handlers = this.handlers.get(messageType);
+      if (handlers) {
+        const index = handlers.indexOf(handler);
+        if (index > -1) {
+          handlers.splice(index, 1);
+        }
+      }
+    };
+  }
+
+  /**
+   * Get connection status
    */
   isConnected(): boolean {
-    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+    return this.ws?.readyState === WebSocket.OPEN;
   }
 
   /**
-   * Play sound effect
+   * Disconnect WebSocket
    */
-  private playSound(soundName: string): void {
-    try {
-      // Create audio element and play sound
-      const audio = new Audio(`/sounds/${soundName}.mp3`);
-      audio.volume = 0.5;
-      audio.play().catch((error) => {
-        console.warn(`[WebSocket] Failed to play sound ${soundName}:`, error);
-      });
-    } catch (error) {
-      console.warn(`[WebSocket] Error playing sound:`, error);
+  disconnect(): void {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
     }
+    this.handlers.clear();
+    this.reconnectAttempts = this.maxReconnectAttempts; // Prevent reconnection
   }
 }
 
-export default WebSocketService;
+// Create singleton instance
+export const websocketService = new WebSocketService();
+
+export default websocketService;

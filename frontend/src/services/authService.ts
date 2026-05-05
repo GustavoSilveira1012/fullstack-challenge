@@ -41,7 +41,16 @@ class AuthService {
       code_challenge_method: 'S256'
     });
 
-    return `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/auth?${params.toString()}`;
+    const loginUrl = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/auth?${params.toString()}`;
+    console.log('Generated login URL:', loginUrl);
+    console.log('Login URL params:', {
+      client_id: this.clientId,
+      redirect_uri: this.redirectUri,
+      keycloakUrl: this.keycloakUrl,
+      realm: this.realm
+    });
+
+    return loginUrl;
   }
 
   /**
@@ -67,6 +76,14 @@ class AuthService {
         throw new Error('Code verifier not found');
       }
 
+      console.log('Exchanging code for token with:', {
+        keycloakUrl: this.keycloakUrl,
+        realm: this.realm,
+        clientId: this.clientId,
+        redirectUri: this.redirectUri,
+        hasCodeVerifier: !!codeVerifier
+      });
+
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
         client_id: this.clientId,
@@ -75,29 +92,54 @@ class AuthService {
         code_verifier: codeVerifier,
       });
 
-      const response = await fetch(
-        `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: params.toString(),
-        }
-      );
+      const tokenUrl = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`;
+      console.log('Token exchange URL:', tokenUrl);
+      console.log('Token exchange params:', params.toString());
+
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('Token exchange response status:', response.status);
+      console.log('Token exchange response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorData = await response.text();
-        throw new Error(`Failed to exchange code for token: ${errorData}`);
+        console.error('Token exchange failed with status:', response.status);
+        console.error('Token exchange error response:', errorData);
+        throw new Error(`Failed to exchange code for token (${response.status}): ${errorData}`);
       }
 
       const data = await response.json();
+      console.log('Token exchange successful, received data keys:', Object.keys(data));
+      console.log('Access token length:', data.access_token?.length || 'undefined');
       
       // Clear the code verifier after use
       sessionStorage.removeItem('code_verifier');
       
       return data as KeycloakTokenResponse;
     } catch (error) {
+      console.error('Token exchange error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Token exchange timed out after 30 seconds');
+      }
+      
       throw new Error(`Token exchange failed: ${(error as Error).message}`);
     }
   }
@@ -151,10 +193,30 @@ class AuthService {
    */
   isTokenExpired(token: string): boolean {
     try {
+      if (!token || typeof token !== 'string') {
+        console.log('Token is invalid or missing');
+        return true;
+      }
+
       const decoded = this.decodeToken(token);
+      if (!decoded || !decoded.exp) {
+        console.log('Token has no expiration time');
+        return true;
+      }
+
       const expirationTime = decoded.exp * 1000; // Convert to milliseconds
-      return Date.now() >= expirationTime;
-    } catch {
+      const currentTime = Date.now();
+      const isExpired = currentTime >= expirationTime;
+      
+      console.log('Token expiration check:', {
+        currentTime: new Date(currentTime).toISOString(),
+        expirationTime: new Date(expirationTime).toISOString(),
+        isExpired
+      });
+      
+      return isExpired;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
       return true;
     }
   }
@@ -215,11 +277,17 @@ class AuthService {
    */
   logout(): void {
     const authStore = useAuthStore.getState();
+    
+    // Clear auth state first
     authStore.logout();
+    
+    // Always redirect to Keycloak logout for real sessions
+    console.log('Redirecting to Keycloak logout');
     window.location.href = this.getLogoutUrl();
   }
 
   private isProcessingCallback = false;
+  private processedCodes = new Set<string>();
 
   /**
    * Handle OAuth2 callback after Keycloak redirects back
@@ -231,12 +299,25 @@ class AuthService {
       return;
     }
 
+    // Check if this code has already been processed
+    if (this.processedCodes.has(code)) {
+      console.log('Code already processed, skipping duplicate...');
+      return;
+    }
+
     try {
       this.isProcessingCallback = true;
-      console.log('Exchanging code for tokens...');
+      this.processedCodes.add(code);
+      
+      // Set flag to prevent useAuth from clearing state during callback
+      sessionStorage.setItem('processing_callback', 'true');
+      
+      console.log('Starting callback processing with code:', code.substring(0, 10) + '...');
       
       // Exchange code for tokens
+      console.log('About to call exchangeCodeForToken...');
       const tokenResponse = await this.exchangeCodeForToken(code);
+      console.log('exchangeCodeForToken completed successfully');
       console.log('Tokens received successfully');
 
       // Manually decode JWT payload (it's the second part of the token)
@@ -249,6 +330,13 @@ class AuthService {
       const payloadBase64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
       const decodedToken = JSON.parse(window.atob(payloadBase64));
       
+      console.log('Decoded token payload:', {
+        sub: decodedToken?.sub,
+        email: decodedToken?.email,
+        exp: decodedToken?.exp,
+        iat: decodedToken?.iat
+      });
+      
       const playerId = decodedToken?.sub;
       const email = decodedToken?.email || 'player@crash-game.dev';
 
@@ -257,19 +345,45 @@ class AuthService {
       }
 
       console.log('Extracted Player ID:', playerId);
+      console.log('Extracted Email:', email);
 
       // Store in auth store
       const authStore = useAuthStore.getState();
+      console.log('Calling authStore.login...');
       authStore.login(tokenResponse.access_token, playerId, email);
+      
+      // Verify the state was set correctly immediately
+      const newState = useAuthStore.getState();
+      console.log('Auth state after login:', {
+        isAuthenticated: newState.isAuthenticated,
+        hasToken: !!newState.token,
+        playerId: newState.playerId
+      });
 
       // Store refresh token in secure storage
       if (tokenResponse.refresh_token) {
         sessionStorage.setItem('refresh_token', tokenResponse.refresh_token);
+        console.log('Refresh token stored');
       }
+      
+      // Try to initialize wallet (create if doesn't exist)
+      try {
+        console.log('Initializing wallet...');
+        const { walletService } = await import('./walletService');
+        await walletService.getBalance(); // This will auto-create wallet if it doesn't exist
+        console.log('Wallet initialized successfully');
+      } catch (walletError) {
+        console.warn('Failed to initialize wallet:', walletError);
+        // Don't fail the login process if wallet creation fails
+      }
+      
+      console.log('Callback processing completed successfully');
     } catch (error) {
       console.error('Authentication callback failed:', error);
       throw new Error(`Authentication callback failed: ${(error as Error).message}`);
     } finally {
+      // Clear the callback processing flag
+      sessionStorage.removeItem('processing_callback');
       this.isProcessingCallback = false;
     }
   }

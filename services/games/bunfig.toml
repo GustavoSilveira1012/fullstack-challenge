@@ -1,0 +1,9 @@
+[install]
+# Bun install configuration
+optional = true
+dev = true
+peer = true
+
+[run]
+# Enable CommonJS interop for NestJS compatibility
+bun = true

@@ -1,10 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { MultiplierDisplay } from '@components/game/MultiplierDisplay';
-import { BetForm } from '@components/game/BetForm';
-import { CashOutButton } from '@components/game/CashOutButton';
-import { BetStatus } from '@components/game/BetStatus';
+import { GameInterface } from '@components/game/GameInterface';
 import { GameHistory } from '@components/game/GameHistory';
 import { LiveActivity } from '@components/game/LiveActivity';
+import { CurrentRoundBets } from '@components/game/CurrentRoundBets';
 import { Button } from '@components/common/Button';
 import { useGameStore } from '@store/gameStore';
 import { useNotification } from '@hooks/useNotification';
@@ -20,24 +19,8 @@ interface GamePageProps {
 
 export const GamePage: React.FC<GamePageProps> = ({ onSidebarToggle }) => {
   const { roundState } = useGameStore();
-  const { showSuccess, showError } = useNotification();
+  const { showError } = useNotification();
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  /**
-   * Handle bet placement success
-   */
-  const handleBetPlaced = useCallback((amount: number) => {
-    // Notification is already handled in BetForm component
-    console.log('Bet placed:', amount);
-  }, []);
-
-  /**
-   * Handle cash out success
-   */
-  const handleCashOut = useCallback((multiplier: number, payout: number) => {
-    // Notification is already handled in CashOutButton component
-    console.log('Cashed out:', { multiplier, payout });
-  }, []);
 
   /**
    * Toggle fullscreen mode
@@ -163,19 +146,14 @@ export const GamePage: React.FC<GamePageProps> = ({ onSidebarToggle }) => {
             Game Controls and Information
           </h2>
 
-          {/* Cash Out Button (prominent placement) */}
-          <div className="flex justify-center">
-            <CashOutButton onCashOut={handleCashOut} />
-          </div>
-
-          {/* Bet Form */}
-          <BetForm onBetPlaced={handleBetPlaced} />
-
-          {/* Bet Status */}
-          <BetStatus />
+          {/* Game Interface (Betting and Cash Out) */}
+          <GameInterface />
 
           {/* Live Activity */}
           <LiveActivity />
+
+          {/* Current Round Bets */}
+          <CurrentRoundBets />
 
           {/* Desktop Game History */}
           <div className="hidden lg:block">

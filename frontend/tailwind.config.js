@@ -127,6 +127,8 @@ export default {
         'fade-in-delay': 'fadeInDelay 2s ease-in-out',
         'multiplier-glow': 'multiplierGlow 2s ease-in-out infinite',
         'cash-out-pulse': 'cashOutPulse 1s ease-in-out infinite',
+        'rocket-wobble': 'rocketWobble 0.3s ease-in-out infinite',
+        'explosion-particle': 'explosionParticle 1s ease-out forwards',
       },
       keyframes: {
         crash: {
@@ -183,6 +185,14 @@ export default {
         cashOutPulse: {
           '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 theme("colors.success.500")' },
           '50%': { transform: 'scale(1.02)', boxShadow: '0 0 0 10px transparent' },
+        },
+        rocketWobble: {
+          '0%, 100%': { transform: 'rotate(-2deg)' },
+          '50%': { transform: 'rotate(2deg)' },
+        },
+        explosionParticle: {
+          '0%': { transform: 'translate(0, 0) scale(1)', opacity: '1' },
+          '100%': { transform: 'translate(var(--particle-distance, 50px), 0) scale(0)', opacity: '0' },
         },
       },
       boxShadow: {

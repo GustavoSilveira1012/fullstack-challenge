@@ -1,4 +1,5 @@
 import apiClient from './api';
+import { useAuthStore } from '../store/authStore';
 import {
   CreateWalletRequest,
   CreateWalletResponse,
@@ -15,7 +16,7 @@ class WalletService {
 
   constructor() {
     // Use separate wallet API URL if configured, otherwise use default API URL
-    this.walletBaseUrl = import.meta.env.VITE_WALLET_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    this.walletBaseUrl = import.meta.env.VITE_WALLET_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000';
   }
 
   /**
@@ -40,22 +41,25 @@ class WalletService {
    */
   async getBalance(): Promise<GetWalletResponse> {
     try {
+      console.log('[WalletService] Fetching balance from:', `${this.walletBaseUrl}/wallets/me`);
       const response = await apiClient.get<GetWalletResponse>('/wallets/me', {
         baseURL: this.walletBaseUrl,
       });
+      console.log('[WalletService] Balance response:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('[WalletService] Error fetching balance:', error);
       // If wallet not found (404), attempt to create it automatically
       if (error.status === 404) {
         console.log('Wallet not found, creating new wallet for player...');
         try {
           // We don't strictly need playerId here as the backend extracts it from the JWT
           const newWallet = await this.createWallet('');
+          console.log('[WalletService] New wallet created:', newWallet);
           return {
             id: newWallet.id,
             playerId: newWallet.playerId,
-            balance: newWallet.balance,
-            currency: newWallet.currency,
+            balance: newWallet.balance, // This should already be a string from the API
             createdAt: newWallet.createdAt,
             updatedAt: newWallet.updatedAt
           };
@@ -74,9 +78,17 @@ class WalletService {
    */
   async getBalanceAmount(): Promise<number> {
     try {
+      console.log('[WalletService] getBalanceAmount called');
       const wallet = await this.getBalance();
-      return wallet.balance;
+      console.log('[WalletService] getBalanceAmount raw response:', wallet);
+      
+      // Parse balance from string to number (backend returns balance as string in centavos)
+      const balanceNumber = parseInt(wallet.balance.toString(), 10);
+      console.log('[WalletService] getBalanceAmount parsed balance:', balanceNumber);
+      
+      return balanceNumber;
     } catch (error) {
+      console.error('[WalletService] getBalanceAmount error:', error);
       throw this.handleError(error, 'Failed to fetch wallet balance');
     }
   }

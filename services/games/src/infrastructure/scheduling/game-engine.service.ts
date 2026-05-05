@@ -14,7 +14,7 @@ export class GameEngineService implements OnModuleInit, OnModuleDestroy {
   private currentTimeout: NodeJS.Timeout | null = null;
   private multiplierInterval: NodeJS.Timeout | null = null;
   
-  private readonly BETTING_DURATION_MS = 10000; // 10 seconds
+  private readonly BETTING_DURATION_MS = 20000; // 20 seconds
   private readonly FINISHED_DURATION_MS = 5000; // 5 seconds
   private readonly MULTIPLIER_TICK_MS = 100; // 100ms updates to clients
 
@@ -41,8 +41,14 @@ export class GameEngineService implements OnModuleInit, OnModuleDestroy {
   }
 
   private clearTimers() {
-    if (this.currentTimeout) clearTimeout(this.currentTimeout);
-    if (this.multiplierInterval) clearInterval(this.multiplierInterval);
+    if (this.currentTimeout) {
+      clearTimeout(this.currentTimeout);
+      this.currentTimeout = null;
+    }
+    if (this.multiplierInterval) {
+      clearInterval(this.multiplierInterval);
+      this.multiplierInterval = null;
+    }
   }
 
   private async runLoop() {
@@ -115,6 +121,7 @@ export class GameEngineService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Round ${round.getId().toString()} is in RUNNING phase`);
     
     const startedAt = round.getStartedAt()!;
+    const crashPoint = round.getCrashPoint().toNumber();
     
     this.gameGateway.broadcast('round:started', {
       roundId: round.getId().toString(),
@@ -127,19 +134,32 @@ export class GameEngineService implements OnModuleInit, OnModuleDestroy {
     const elapsed = now - startedAt.getTime();
     const remainingTime = Math.max(0, timeUntilCrash - elapsed);
 
+    this.logger.log(`Round ${round.getId().toString()} will crash in ${remainingTime}ms at ${crashPoint}x`);
+
+    // If remaining time is very small, log a warning
+    if (remainingTime < 1000) {
+      this.logger.warn(`Round ${round.getId().toString()} has very short remaining time: ${remainingTime}ms. This may cause immediate crash.`);
+    }
+
     // Setup interval to broadcast multiplier updates
     this.multiplierInterval = setInterval(() => {
       const currentNow = new Date();
       const currentMultiplier = this.multiplierService.calculateMultiplier(startedAt, currentNow, round.getCrashPoint());
       
-      this.gameGateway.broadcast('multiplier:update', {
-        roundId: round.getId().toString(),
-        multiplier: currentMultiplier.toNumber(),
-      });
+      // Only send updates if we haven't reached crash point yet
+      if (currentMultiplier.toNumber() < crashPoint) {
+        this.gameGateway.broadcast('multiplier:update', {
+          roundId: round.getId().toString(),
+          multiplier: currentMultiplier.toNumber(),
+        });
+      }
     }, this.MULTIPLIER_TICK_MS);
 
     this.currentTimeout = setTimeout(async () => {
-      if (this.multiplierInterval) clearInterval(this.multiplierInterval);
+      if (this.multiplierInterval) {
+        clearInterval(this.multiplierInterval);
+        this.multiplierInterval = null;
+      }
       
       try {
         await this.processRoundCrashUseCase.execute(round.getId());

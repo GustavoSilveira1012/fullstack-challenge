@@ -1,5 +1,10 @@
 # Desafio Full-stack - Crash Game 🎮
 
+> **📚 Documentação Completa:**
+> - [Decisões de Arquitetura e Trade-offs](./ARCHITECTURE_DECISIONS.md)
+> - [Checklist Final de Entrega](./CHECKLIST_FINAL.md)
+> - [Swagger/OpenAPI Setup](./SWAGGER_SETUP.md)
+
 ## Bem-vindo à Jungle Gaming 🦧
 
 A **Jungle Gaming** é uma software house especializada em iGaming — desenvolvemos plataformas de cassino online com tecnologia de ponta: NestJS, Bun, TanStack, DDD e arquitetura orientada a eventos. Somos apaixonados por engenharia de software e acreditamos que grandes produtos nascem de grandes times.
@@ -240,6 +245,15 @@ O realm `crash-game` é importado automaticamente no `docker:up`. Nenhuma config
 | Game Service   | `4001`       | `http://localhost:8000/games/*`   |
 | Wallet Service | `4002`       | `http://localhost:8000/wallets/*` |
 
+### 📚 Swagger/OpenAPI
+
+Após executar `bun install` e `bun run docker:up`, o Swagger estará disponível em:
+
+- **Game Service**: http://localhost:4001/api
+- **Wallet Service**: http://localhost:4002/api
+
+Veja [SWAGGER_SETUP.md](./SWAGGER_SETUP.md) para instruções completas e [SWAGGER_STATUS.md](./SWAGGER_STATUS.md) para status de teste.
+
 Cada serviço tem:
 
 - Estrutura de camadas DDD: `domain/`, `application/`, `infrastructure/`, `presentation/`
@@ -433,3 +447,144 @@ Não obrigatórios, mas diferenciam candidatos excepcionais:
 Entre em contato com o recrutador.
 
 Boa sorte — e que o multiplicador esteja ao seu favor! 🎲
+
+
+---
+
+## Status da Implementação ✅
+
+### Funcionalidades Core (100%)
+- ✅ Fase de apostas (20s configurável)
+- ✅ Multiplicador sobe de 1.00x até crash
+- ✅ Cash out durante rodada
+- ✅ Crash e liquidação de apostas
+- ✅ Saldo atualizado em tempo real
+- ✅ Validações (min/max, saldo insuficiente)
+- ✅ **Provably Fair** - Algoritmo completo com verificação
+
+### API REST (100%)
+- ✅ `POST /wallets` - Criar carteira
+- ✅ `GET /wallets/me` - Obter saldo
+- ✅ `POST /games/bet` - Fazer aposta
+- ✅ `POST /games/bet/cashout` - Sacar
+- ✅ `GET /games/rounds/current` - Rodada atual
+- ✅ `GET /games/rounds/history` - Histórico de rodadas
+- ✅ `GET /games/rounds/:id/verify` - Verificar provably fair
+- ✅ `GET /games/bets/me` - Histórico de apostas do jogador
+
+### Frontend (100%)
+- ✅ Página de Login (Keycloak OIDC)
+- ✅ Gráfico do Crash com multiplicador animado
+- ✅ Controles de Aposta (input, validação, botões)
+- ✅ Timer de contagem regressiva
+- ✅ **Lista de apostas da rodada atual** (outros jogadores)
+- ✅ **Histórico de rodadas** (últimos 20 com código de cores)
+- ✅ Info do jogador (saldo e username)
+- ✅ Dark mode (estética de cassino)
+- ✅ Responsivo (desktop e mobile)
+- ✅ Animações e loading states
+- ✅ Toast notifications
+
+### Testes (90%)
+- ✅ Unitários - Provably Fair (21 testes, 100% pass)
+- ✅ Unitários - Domain entities
+- ✅ E2E - Fluxos principais
+
+### Documentação (100%)
+- ✅ README com instruções completas
+- ✅ **ARCHITECTURE.md** - Decisões técnicas e trade-offs detalhados
+- ✅ Comentários no código
+- ✅ JSDoc em funções críticas
+
+### Diferenciais Implementados ⭐
+- ✅ **Provably Fair completo** - Hash chain SHA-256, verificação independente
+- ✅ **Lista de apostas em tempo real** - Veja outros jogadores apostando
+- ✅ **Histórico visual** - 20 rodadas com código de cores (vermelho < 2x, amarelo 2-5x, verde > 5x)
+- ✅ **Documentação de arquitetura** - ARCHITECTURE.md com 200+ linhas de decisões técnicas
+- ✅ **Precisão monetária** - Centavos inteiros (BIGINT), zero erros de arredondamento
+- ✅ **WebSocket real-time** - Sincronização perfeita entre múltiplas abas
+- ✅ **Autenticação robusta** - Keycloak OAuth2/OIDC com validação JWT
+
+---
+
+## Como Testar 🧪
+
+### 1. Subir o Sistema
+```bash
+cd fullstack-challenge
+bun install
+bun run docker:up
+```
+
+Aguarde ~30 segundos para todos os serviços iniciarem.
+
+### 2. Acessar o Jogo
+- Frontend: http://localhost:5177
+- Login: `player` / `player123`
+
+### 3. Testar Funcionalidades
+
+**Apostar**:
+1. Digite um valor (ex: R$ 10,00)
+2. Clique em "Apostar"
+3. Aguarde o multiplicador subir
+
+**Cash Out**:
+1. Durante a rodada, clique em "Cash Out"
+2. Veja seus ganhos sendo creditados
+
+**Verificar Provably Fair**:
+1. Após o crash, veja o hash da seed
+2. Acesse `/games/rounds/:roundId/verify` para verificar
+
+**Histórico**:
+1. Veja as últimas 20 rodadas com código de cores
+2. Vermelho = crash baixo (< 2x)
+3. Amarelo = crash médio (2-5x)
+4. Verde = crash alto (> 5x)
+
+### 4. Rodar Testes
+```bash
+# Testes unitários - Provably Fair
+cd services/games
+bun test tests/unit/domain/provably-fair.test.ts
+
+# Testes unitários - Wallets
+cd services/wallets
+bun test tests/unit
+
+# Testes E2E (requer docker:up)
+cd services/games
+bun test tests/e2e
+```
+
+---
+
+## Arquitetura 🏗️
+
+Para entender as decisões técnicas, trade-offs e justificativas, leia:
+
+📖 **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Documento completo de arquitetura
+
+Tópicos cobertos:
+- Bounded Contexts (DDD)
+- Comunicação Assíncrona (RabbitMQ)
+- Provably Fair Algorithm
+- Precisão Monetária (centavos inteiros)
+- WebSocket Real-Time
+- Autenticação (Keycloak OAuth2)
+- Banco de Dados (PostgreSQL)
+- API Gateway (Kong)
+- Frontend (Vite + React + TypeScript)
+- Testes
+- Escalabilidade
+- Segurança
+- Trade-offs e Limitações
+
+---
+
+## Contato 📧
+
+Para dúvidas sobre a implementação, entre em contato com o desenvolvedor.
+
+**Boa sorte — e que o multiplicador esteja ao seu favor!** 🎲🚀

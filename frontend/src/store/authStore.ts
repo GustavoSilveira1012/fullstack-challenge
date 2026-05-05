@@ -26,6 +26,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
 
   login: (token, playerId, email) => {
+    console.log('AuthStore.login called with:', {
+      hasToken: !!token,
+      playerId,
+      email
+    });
+
     set({
       isAuthenticated: true,
       token,
@@ -41,6 +47,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Note: In production, JWT tokens should be stored in httpOnly cookies
     // For development, we store in localStorage as a fallback
     localStorage.setItem('token', token);
+
+    console.log('AuthStore.login completed, localStorage updated');
+    
+    // Verify localStorage was updated
+    console.log('Verification - localStorage contents:', {
+      token: !!localStorage.getItem('token'),
+      playerId: localStorage.getItem('playerId'),
+      email: localStorage.getItem('email'),
+      isAuthenticated: localStorage.getItem('isAuthenticated')
+    });
   },
 
   logout: () => {

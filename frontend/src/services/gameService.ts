@@ -1,4 +1,5 @@
 import apiClient from './api';
+import { useAuthStore } from '../store/authStore';
 import {
   PlaceBetRequest,
   PlaceBetResponse,
@@ -22,10 +23,13 @@ class GameService {
    */
   async placeBet(amount: number): Promise<PlaceBetResponse> {
     try {
+      console.log('[GameService] Placing bet with amount:', amount);
       const request: PlaceBetRequest = { amount };
       const response = await apiClient.post<PlaceBetResponse>('/games/bet', request);
+      console.log('[GameService] Bet placement response:', response);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[GameService] Bet placement error:', error);
       throw this.handleError(error, 'Failed to place bet');
     }
   }
@@ -51,9 +55,7 @@ class GameService {
    */
   async getCurrentRound(retryCount = 0): Promise<CurrentRoundResponse> {
     try {
-      const response = await apiClient.get<CurrentRoundResponse>('/games/rounds/current', {
-        baseURL: this.gamesBaseUrl,
-      });
+      const response = await apiClient.get<CurrentRoundResponse>('/games/rounds/current');
       return response.data;
     } catch (error: any) {
       // If round not found (404) and we haven't retried too many times, try again

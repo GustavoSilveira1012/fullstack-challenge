@@ -2,7 +2,7 @@ import React, { useMemo, useEffect } from 'react';
 import { useGameStore } from '@store/gameStore';
 import { useScreenReaderAnnouncement } from '@hooks/useFocusManagement';
 import { formatMultiplierForScreenReader } from '@utils/accessibility';
-import { CrashAnimation } from './CrashAnimation';
+import { RocketAnimation } from './RocketAnimation';
 import { useSound } from '@hooks/useSound';
 
 /**
@@ -30,6 +30,10 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
    * Red: 5.00+
    */
   const multiplierColor = useMemo(() => {
+    // Ensure currentMultiplier is a valid number
+    if (typeof currentMultiplier !== 'number' || isNaN(currentMultiplier) || !isFinite(currentMultiplier)) {
+      return 'text-green-500';
+    }
     if (currentMultiplier < 2) return 'text-green-500';
     if (currentMultiplier < 5) return 'text-yellow-500';
     return 'text-red-500';
@@ -39,6 +43,10 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
    * Format multiplier with 2 decimal places
    */
   const formattedMultiplier = useMemo(() => {
+    // Ensure currentMultiplier is a valid number
+    if (typeof currentMultiplier !== 'number' || isNaN(currentMultiplier) || !isFinite(currentMultiplier)) {
+      return '1.00';
+    }
     return currentMultiplier.toFixed(2);
   }, [currentMultiplier]);
 
@@ -84,7 +92,7 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
 
   return (
     <section
-      className={`flex flex-col items-center justify-center gap-4 ${className}`}
+      className={`w-full h-full flex flex-col items-center justify-center gap-4 relative ${className}`}
       role="region"
       aria-labelledby="multiplier-heading"
       aria-live="polite"
@@ -94,10 +102,13 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
         Current Game Multiplier
       </h2>
 
+      {/* Rocket Animation Background - Full size */}
+      <RocketAnimation className="absolute inset-0" />
+
       {/* LIVE Badge */}
       {isLive && (
         <div 
-          className="flex items-center gap-2" 
+          className="flex items-center gap-2 relative z-10" 
           role="status" 
           aria-label="Round is currently live and active"
         >
@@ -112,7 +123,7 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
 
       {/* Multiplier Display */}
       <div
-        className={`text-6xl md:text-7xl font-bold font-mono transition-all duration-300 ${
+        className={`text-6xl md:text-7xl font-bold font-mono transition-all duration-300 relative z-10 ${
           isCrashed ? 'text-red-600 animate-shake' : multiplierColor
         } ${isLive ? 'animate-multiplier-glow' : ''}`}
         aria-label={`Current multiplier: ${formatMultiplierForScreenReader(currentMultiplier)}`}
@@ -125,24 +136,10 @@ export const MultiplierDisplay: React.FC<MultiplierDisplayProps> = ({ className 
         <span className="text-4xl md:text-5xl" aria-hidden="true">x</span>
       </div>
 
-      {/* Crash Animation */}
-      <CrashAnimation />
-
-      {/* Crash Status */}
-      {isCrashed && (
-        <div 
-          className="text-2xl font-bold text-red-600 animate-bounce-in"
-          role="alert"
-          aria-label={`Game crashed at ${formatMultiplierForScreenReader(currentMultiplier)}`}
-        >
-          CRASHED
-        </div>
-      )}
-
       {/* Betting Status */}
       {roundState === 'BETTING' && (
         <div 
-          className="text-lg text-gray-500 dark:text-gray-400"
+          className="text-lg text-gray-500 dark:text-gray-400 relative z-10"
           role="status"
           aria-label="Waiting for next round to start, you can place bets now"
           id="multiplier-status"

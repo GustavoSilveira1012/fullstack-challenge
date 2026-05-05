@@ -11,13 +11,17 @@ import {
   Controller,
   Post,
   Get,
+  Options,
   UseGuards,
   Request,
   HttpCode,
   HttpStatus,
   ConflictException,
   NotFoundException,
+  Res,
+  Req,
 } from '@nestjs/common';
+import { Response, Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { CreateWalletUseCase } from '../../application/create-wallet.use-case';
@@ -25,7 +29,7 @@ import { GetWalletUseCase } from '../../application/get-wallet.use-case';
 import { WalletResponseDto } from '../../application/dtos';
 import { WalletAlreadyExistsError, WalletNotFoundError } from '../../application/errors';
 
-@Controller('wallets')
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class WalletsController {
   constructor(
@@ -63,6 +67,48 @@ export class WalletsController {
     }
 
     return result.value;
+  }
+
+  /**
+   * OPTIONS /wallets/me
+   * 
+   * Handles CORS preflight requests for the /wallets/me endpoint
+   */
+  @Options('me')
+  @HttpCode(HttpStatus.OK)
+  handleOptionsMe(@Req() req: ExpressRequest, @Res() res: Response): void {
+    const origin = req.headers.origin;
+    
+    // Set CORS headers
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With,X-CSRF-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'Authorization');
+    
+    console.log(`[CORS] Handled OPTIONS request for /wallets/me from origin ${origin}`);
+    res.status(200).end();
+  }
+
+  /**
+   * OPTIONS /wallets
+   * 
+   * Handles CORS preflight requests for the /wallets endpoint
+   */
+  @Options()
+  @HttpCode(HttpStatus.OK)
+  handleOptions(@Req() req: ExpressRequest, @Res() res: Response): void {
+    const origin = req.headers.origin;
+    
+    // Set CORS headers
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With,X-CSRF-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'Authorization');
+    
+    console.log(`[CORS] Handled OPTIONS request for /wallets from origin ${origin}`);
+    res.status(200).end();
   }
 
   /**

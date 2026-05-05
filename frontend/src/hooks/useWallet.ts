@@ -20,10 +20,15 @@ export const useWallet = () => {
     const fetchBalance = async () => {
       try {
         setIsLoading(true);
+        console.log('[useWallet] Fetching balance from API...');
         const amount = await walletService.getBalanceAmount();
+        console.log('[useWallet] Balance fetched from API:', amount);
+        console.log('[useWallet] Setting balance in store...');
         setBalance(amount);
+        console.log('[useWallet] Balance set in store, current balance:', amount);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch wallet balance';
+        console.error('[useWallet] Error fetching balance:', err);
         setError(errorMessage);
         addNotification({
           type: 'error',

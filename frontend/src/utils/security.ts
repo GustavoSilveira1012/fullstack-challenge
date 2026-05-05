@@ -483,8 +483,8 @@ export const validateInput = {
    */
   betAmount: (amount: string | number): { isValid: boolean; sanitized: number | null; error?: string } => {
     const sanitized = sanitizeNumericInput(amount, {
-      min: 100, // R$ 1.00 in centavos
-      max: 100000, // R$ 1.000,00 in centavos
+      min: 0, // Don't enforce min/max in sanitization, check separately
+      max: Infinity,
       allowDecimals: true,
       allowNegative: false,
     });

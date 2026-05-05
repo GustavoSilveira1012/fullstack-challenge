@@ -30,7 +30,22 @@ export const useGameStore = create<GameState>((set) => ({
   },
 
   setMultiplier: (multiplier) => {
-    set({ currentMultiplier: multiplier });
+    // Validate and ensure multiplier is always valid
+    const validMultiplier = typeof multiplier === 'number' && 
+                           !isNaN(multiplier) && 
+                           isFinite(multiplier) && 
+                           multiplier >= 1.0 
+                           ? multiplier 
+                           : 1.0;
+    
+    // Only update if the value actually changed to prevent unnecessary re-renders
+    set((state) => {
+      if (state.currentMultiplier !== validMultiplier) {
+        console.log('[GameStore] Multiplier updated:', state.currentMultiplier, '->', validMultiplier);
+        return { currentMultiplier: validMultiplier };
+      }
+      return state;
+    });
   },
 
   setRoundState: (state) => {

@@ -118,8 +118,8 @@ export interface CreateWalletResponse {
 export interface GetWalletResponse {
   id: string;
   playerId: string;
-  balance: number;
-  currency: string;
+  balance: string; // Backend returns balance as string (centavos)
+  currency?: string; // Optional since backend doesn't return this
   createdAt: string;
   updatedAt: string;
 }

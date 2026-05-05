@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useGameStore } from '@store/gameStore';
 import type { Round } from '@/types';
 import { Badge } from '@components/common';
+import { gameService } from '@services/gameService';
 
 /**
  * GameHistory Component
  * Displays recent rounds with crash points and timestamps
+ * Color-coded: Red (< 2x), Yellow (2-5x), Green (> 5x)
  * Requirement 2.2.4: Recent rounds list with crash points and timestamps
  */
 interface GameHistoryProps {
@@ -19,15 +21,37 @@ interface GameHistoryProps {
   className?: string;
 }
 
-export const GameHistory: React.FC<GameHistoryProps> = ({ maxRounds = 10, className = '' }) => {
+export const GameHistory: React.FC<GameHistoryProps> = ({ maxRounds = 20, className = '' }) => {
   const { recentRounds } = useGameStore();
+  const [historyRounds, setHistoryRounds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  /**
+   * Fetch round history from API
+   */
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await gameService.getRoundHistory(1, maxRounds);
+        setHistoryRounds(response.rounds || []);
+      } catch (error) {
+        console.error('Failed to fetch round history:', error);
+        // Fallback to store data
+        setHistoryRounds(recentRounds.slice(0, maxRounds));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [maxRounds, recentRounds]);
 
   /**
    * Get the rounds to display (limited by maxRounds)
    */
   const displayRounds = useMemo(() => {
-    return recentRounds.slice(0, maxRounds);
-  }, [recentRounds, maxRounds]);
+    return historyRounds.length > 0 ? historyRounds : recentRounds.slice(0, maxRounds);
+  }, [historyRounds, recentRounds, maxRounds]);
 
   /**
    * Format timestamp to readable format
@@ -54,10 +78,41 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ maxRounds = 10, classN
   /**
    * Format crash point with 2 decimal places
    */
-  const formatCrashPoint = (crashPoint: number | null): string => {
+  const formatCrashPoint = (crashPoint: number | string | null): string => {
     if (crashPoint === null) return 'N/A';
-    return crashPoint.toFixed(2);
+    const value = typeof crashPoint === 'string' ? parseFloat(crashPoint) : crashPoint;
+    return value.toFixed(2);
   };
+
+  /**
+   * Get color class based on crash point
+   * Red: < 2x (low)
+   * Yellow: 2-5x (medium)
+   * Green: > 5x (high)
+   */
+  const getCrashPointColor = (crashPoint: number | string | null): string => {
+    if (crashPoint === null) return 'text-gray-500';
+    const value = typeof crashPoint === 'string' ? parseFloat(crashPoint) : crashPoint;
+    
+    if (value < 2) {
+      return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+    } else if (value < 5) {
+      return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
+    } else {
+      return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={`flex flex-col gap-3 ${className}`}>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Rounds</h3>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -72,42 +127,20 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ maxRounds = 10, classN
           No rounds yet. Start playing to see history.
         </div>
       ) : (
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {displayRounds.map((round: Round) => (
-            <div
-              key={round.id}
-              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              role="listitem"
-            >
-              {/* Round Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-mono text-gray-600 dark:text-gray-400 truncate">
-                    {round.id.substring(0, 8)}...
-                  </span>
-                  <Badge
-                    variant={round.state === 'CRASHED' ? 'danger' : 'primary'}
-                    size="small"
-                  >
-                    {round.state}
-                  </Badge>
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-500">
-                  {formatTime(round.createdAt)}
-                </div>
+        <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+          {displayRounds.map((round: any, index: number) => {
+            const crashPoint = round.crashPoint || round.crash_point;
+            return (
+              <div
+                key={round.id || index}
+                className={`flex items-center justify-center p-2 rounded-lg font-bold text-sm ${getCrashPointColor(crashPoint)}`}
+                title={`Round ${round.id?.substring(0, 8) || index}: ${formatCrashPoint(crashPoint)}x - ${formatTime(round.createdAt || round.created_at)}`}
+                role="listitem"
+              >
+                {formatCrashPoint(crashPoint)}x
               </div>
-
-              {/* Crash Point */}
-              <div className="text-right ml-4">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
-                  {formatCrashPoint(round.crashPoint)}x
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-500">
-                  {round.playerCount} players
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -12,6 +12,21 @@ vi.mock('@store/gameStore');
 vi.mock('@store/walletStore');
 vi.mock('@hooks/useNotification');
 vi.mock('@services/gameService');
+vi.mock('@hooks/useSound', () => ({
+  useSound: () => ({
+    playSound: vi.fn(),
+    initializeAudio: vi.fn(),
+    soundEnabled: true,
+    toggleSound: vi.fn(),
+  }),
+}));
+vi.mock('@hooks/useErrorRecovery', () => ({
+  useErrorRecovery: () => ({
+    withRetry: vi.fn((fn) => fn()),
+    executeWhenOnline: vi.fn((fn) => fn()),
+    isOnline: true,
+  }),
+}));
 
 const mockUseGameStore = vi.mocked(useGameStore);
 const mockUseWalletStore = vi.mocked(useWalletStore);
@@ -20,6 +35,8 @@ const mockGameService = vi.mocked(gameService);
 
 describe('BetForm', () => {
   const mockAddNotification = vi.fn();
+  const mockShowSuccess = vi.fn();
+  const mockShowError = vi.fn();
   const mockSetLastBetAmount = vi.fn();
   const mockOnBetPlaced = vi.fn();
 
@@ -53,6 +70,8 @@ describe('BetForm', () => {
       addNotification: mockAddNotification,
       removeNotification: vi.fn(),
       notifications: [],
+      showSuccess: mockShowSuccess,
+      showError: mockShowError,
     });
   });
 
@@ -60,7 +79,7 @@ describe('BetForm', () => {
     render(<BetForm />);
 
     expect(screen.getByText('Place Your Bet')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bet amount in reais')).toBeInTheDocument();
+    expect(screen.getByLabelText('Enter bet amount in reais')).toBeInTheDocument();
     expect(screen.getByText('Quick Bet')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /place bet/i })).toBeInTheDocument();
     expect(screen.getByText('Balance: R$ 100,00')).toBeInTheDocument();
@@ -79,7 +98,7 @@ describe('BetForm', () => {
     const user = userEvent.setup();
     render(<BetForm />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.type(input, '0,50'); // Below minimum
 
     expect(screen.getByText('Minimum bet is R$ 1,00')).toBeInTheDocument();
@@ -90,7 +109,7 @@ describe('BetForm', () => {
     const user = userEvent.setup();
     render(<BetForm />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.type(input, '1500,00'); // Above maximum
 
     expect(screen.getByText('Maximum bet is R$ 1.000,00')).toBeInTheDocument();
@@ -111,7 +130,7 @@ describe('BetForm', () => {
 
     render(<BetForm />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.type(input, '10,00'); // More than balance
 
     expect(screen.getByText('Insufficient balance. You have R$ 5,00, but need R$ 10,00')).toBeInTheDocument();
@@ -135,7 +154,7 @@ describe('BetForm', () => {
 
     render(<BetForm />);
 
-    expect(screen.getByLabelText('Bet amount in reais')).toBeDisabled();
+    expect(screen.getByLabelText('Enter bet amount in reais')).toBeDisabled();
     expect(screen.getByRole('button', { name: /betting is closed for this round/i })).toBeDisabled();
     expect(screen.getByText('Betting is closed for this round')).toBeInTheDocument();
   });
@@ -166,7 +185,7 @@ describe('BetForm', () => {
 
     render(<BetForm />);
 
-    expect(screen.getByLabelText('Bet amount in reais')).toBeDisabled();
+    expect(screen.getByLabelText('Enter bet amount in reais')).toBeDisabled();
     expect(screen.getByRole('button', { name: /you already have an active bet/i })).toBeDisabled();
     expect(screen.getByText('You already have an active bet')).toBeInTheDocument();
   });
@@ -180,7 +199,7 @@ describe('BetForm', () => {
     expect(screen.getByDisplayValue('10,00')).toBeInTheDocument();
 
     // Clear input
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.clear(input);
 
     // Test 2x button
@@ -221,7 +240,7 @@ describe('BetForm', () => {
 
     render(<BetForm onBetPlaced={mockOnBetPlaced} />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.type(input, '10,00');
 
     const submitButton = screen.getByRole('button', { name: /place bet/i });
@@ -230,10 +249,7 @@ describe('BetForm', () => {
     await waitFor(() => {
       expect(mockGameService.placeBet).toHaveBeenCalledWith(1000);
       expect(mockSetLastBetAmount).toHaveBeenCalledWith(1000);
-      expect(mockAddNotification).toHaveBeenCalledWith({
-        type: 'success',
-        message: 'Bet placed: R$ 10,00',
-      });
+      expect(mockShowSuccess).toHaveBeenCalledWith('Bet placed: R$ 10,00');
       expect(mockOnBetPlaced).toHaveBeenCalledWith(1000);
     });
 
@@ -248,17 +264,14 @@ describe('BetForm', () => {
 
     render(<BetForm />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.type(input, '10,00');
 
     const submitButton = screen.getByRole('button', { name: /place bet/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith({
-        type: 'error',
-        message: 'Insufficient balance',
-      });
+      expect(mockShowError).toHaveBeenCalledWith('Insufficient balance');
     });
   });
 
@@ -266,7 +279,7 @@ describe('BetForm', () => {
     const user = userEvent.setup();
     render(<BetForm />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     
     // Valid input
     await user.type(input, '12,34');
@@ -317,7 +330,7 @@ describe('BetForm', () => {
 
     render(<BetForm />);
 
-    const input = screen.getByLabelText('Bet amount in reais');
+    const input = screen.getByLabelText('Enter bet amount in reais');
     await user.type(input, '10,00');
 
     const submitButton = screen.getByRole('button', { name: /place bet/i });
@@ -330,6 +343,200 @@ describe('BetForm', () => {
     // Wait for completion
     await waitFor(() => {
       expect(screen.getByText('Place Bet')).toBeInTheDocument();
+    });
+  });
+
+  describe('API Integration - Currency Conversion', () => {
+    it('sends correct centavos amount to API when user enters "10,00"', async () => {
+      const user = userEvent.setup();
+      
+      mockGameService.placeBet.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'bet-1',
+          roundId: 'round-1',
+          playerId: 'player-1',
+          amount: 1000,
+          state: 'ACTIVE',
+          cashedOutAt: null,
+          payout: null,
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+      });
+
+      render(<BetForm />);
+
+      const input = screen.getByLabelText('Enter bet amount in reais');
+      await user.type(input, '10,00');
+
+      const submitButton = screen.getByRole('button', { name: /place bet/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        // Verify API receives 1000 centavos (not 10)
+        expect(mockGameService.placeBet).toHaveBeenCalledWith(1000);
+      });
+    });
+
+    it('sends correct centavos amount to API when user enters "50,00"', async () => {
+      const user = userEvent.setup();
+      
+      mockGameService.placeBet.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'bet-1',
+          roundId: 'round-1',
+          playerId: 'player-1',
+          amount: 5000,
+          state: 'ACTIVE',
+          cashedOutAt: null,
+          payout: null,
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+      });
+
+      render(<BetForm />);
+
+      const input = screen.getByLabelText('Enter bet amount in reais');
+      await user.type(input, '50,00');
+
+      const submitButton = screen.getByRole('button', { name: /place bet/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        // Verify API receives 5000 centavos (not 50)
+        expect(mockGameService.placeBet).toHaveBeenCalledWith(5000);
+      });
+    });
+
+    it('sends correct centavos amount to API when user enters "100,00"', async () => {
+      const user = userEvent.setup();
+      
+      mockGameService.placeBet.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'bet-1',
+          roundId: 'round-1',
+          playerId: 'player-1',
+          amount: 10000,
+          state: 'ACTIVE',
+          cashedOutAt: null,
+          payout: null,
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+      });
+
+      render(<BetForm />);
+
+      const input = screen.getByLabelText('Enter bet amount in reais');
+      await user.type(input, '100,00');
+
+      const submitButton = screen.getByRole('button', { name: /place bet/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        // Verify API receives 10000 centavos (not 100)
+        expect(mockGameService.placeBet).toHaveBeenCalledWith(10000);
+      });
+    });
+
+    it('sends correct centavos amount to API when user enters "1,00" (minimum bet)', async () => {
+      const user = userEvent.setup();
+      
+      mockGameService.placeBet.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'bet-1',
+          roundId: 'round-1',
+          playerId: 'player-1',
+          amount: 100,
+          state: 'ACTIVE',
+          cashedOutAt: null,
+          payout: null,
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+      });
+
+      render(<BetForm />);
+
+      const input = screen.getByLabelText('Enter bet amount in reais');
+      await user.type(input, '1,00');
+
+      const submitButton = screen.getByRole('button', { name: /place bet/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        // Verify API receives 100 centavos (not 1)
+        expect(mockGameService.placeBet).toHaveBeenCalledWith(100);
+      });
+    });
+
+    it('sends correct centavos amount to API with decimal values', async () => {
+      const user = userEvent.setup();
+      
+      mockGameService.placeBet.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'bet-1',
+          roundId: 'round-1',
+          playerId: 'player-1',
+          amount: 1550,
+          state: 'ACTIVE',
+          cashedOutAt: null,
+          payout: null,
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+      });
+
+      render(<BetForm />);
+
+      const input = screen.getByLabelText('Enter bet amount in reais');
+      await user.type(input, '15,50');
+
+      const submitButton = screen.getByRole('button', { name: /place bet/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        // Verify API receives 1550 centavos (not 15.5)
+        expect(mockGameService.placeBet).toHaveBeenCalledWith(1550);
+      });
+    });
+
+    it('bet placement succeeds with correct centavos amounts', async () => {
+      const user = userEvent.setup();
+      
+      mockGameService.placeBet.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'bet-1',
+          roundId: 'round-1',
+          playerId: 'player-1',
+          amount: 1000,
+          state: 'ACTIVE',
+          cashedOutAt: null,
+          payout: null,
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+      });
+
+      render(<BetForm onBetPlaced={mockOnBetPlaced} />);
+
+      const input = screen.getByLabelText('Enter bet amount in reais');
+      await user.type(input, '10,00');
+
+      const submitButton = screen.getByRole('button', { name: /place bet/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        // Verify API call was successful
+        expect(mockGameService.placeBet).toHaveBeenCalledWith(1000);
+        // Verify success notification
+        expect(mockShowSuccess).toHaveBeenCalledWith('Bet placed: R$ 10,00');
+        // Verify callback was called with centavos
+        expect(mockOnBetPlaced).toHaveBeenCalledWith(1000);
+        // Verify last bet amount was updated with centavos
+        expect(mockSetLastBetAmount).toHaveBeenCalledWith(1000);
+      });
     });
   });
 });

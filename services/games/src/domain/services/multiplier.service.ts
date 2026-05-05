@@ -16,7 +16,7 @@ export interface IMultiplierService {
 }
 
 export class MultiplierService implements IMultiplierService {
-  private readonly exponentialConstant: number = 0.00006;
+  private readonly exponentialConstant: number = 0.00003; // Reduced from 0.00006 to make rounds last longer
 
   /**
    * Calculate the current multiplier based on elapsed time
@@ -72,14 +72,23 @@ export class MultiplierService implements IMultiplierService {
   getTimeUntilCrash(_startTime: Date, crashPoint: CrashPoint): number {
     const crashPointValue = crashPoint.toNumber();
 
-    // Handle edge case where crash point is 1.00x
-    if (crashPointValue <= 1.0) {
-      return 0;
+    // CRITICAL: Handle edge case where crash point is at minimum
+    // Since we now guarantee minimum 1.50x, ensure adequate time for gameplay
+    if (crashPointValue <= 1.50) {
+      return 5000; // 5 seconds minimum for 1.50x crashes
     }
 
-    // Calculate time: elapsedMs = ln(crashPoint) / 0.00006
+    // For crash points between 1.50x and 2.00x, provide proportional time
+    if (crashPointValue <= 2.00) {
+      // Scale from 5 seconds (1.50x) to 7 seconds (2.00x)
+      const scaleFactor = (crashPointValue - 1.50) / (2.00 - 1.50);
+      return 5000 + (scaleFactor * 2000); // 5-7 seconds range
+    }
+
+    // Calculate time: elapsedMs = ln(crashPoint) / 0.00003
     const timeUntilCrash = Math.log(crashPointValue) / this.exponentialConstant;
 
-    return timeUntilCrash;
+    // Ensure minimum time of 7 seconds for any crash point above 2.00x
+    return Math.max(7000, timeUntilCrash);
   }
 }

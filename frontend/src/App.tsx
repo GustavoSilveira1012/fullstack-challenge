@@ -13,18 +13,26 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const VerifyPage = lazy(() => import('./pages/VerifyPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 /**
  * Protected Route Component
  * Redirects to login if user is not authenticated
  */
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Show loading while checking authentication
+  if (isLoading) {
+    return <Loading size="large" text="Checking authentication..." />;
+  }
   
   if (!isAuthenticated) {
+    console.log('User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
+  console.log('User authenticated, showing protected content');
   return <>{children}</>;
 };
 
@@ -33,12 +41,19 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
  * Redirects to dashboard if user is already authenticated
  */
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Show loading while checking authentication
+  if (isLoading) {
+    return <Loading size="large" text="Checking authentication..." />;
+  }
   
   if (isAuthenticated) {
+    console.log('User already authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
   
+  console.log('User not authenticated, showing public content');
   return <>{children}</>;
 };
 
@@ -111,6 +126,15 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <VerifyPage />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    <Route 
+                      path="/settings" 
+                      element={
+                        <ProtectedRoute>
+                          <SettingsPage />
                         </ProtectedRoute>
                       } 
                     />

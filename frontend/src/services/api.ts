@@ -48,7 +48,7 @@ const createApiClient = (): AxiosInstance => {
   const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4001',
     timeout: 10000,
-    withCredentials: true, // Include cookies for httpOnly token
+    withCredentials: false, // Disable credentials to avoid CORS issues
   });
 
   /**
@@ -70,6 +70,17 @@ const createApiClient = (): AxiosInstance => {
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('[API Client] Sending request with token:', {
+          url: config.url,
+          method: config.method,
+          hasToken: !!token,
+          tokenPreview: token.substring(0, 50) + '...'
+        });
+      } else {
+        console.log('[API Client] Sending request without token:', {
+          url: config.url,
+          method: config.method
+        });
       }
 
       // Add CSRF token for state-changing requests
